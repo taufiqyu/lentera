@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shadow Art — Generator Pola</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:           #0b0d10;
+    --panel:        #14171c;
+    --panel-raised: #1a1e24;
+    --canvas:       #0e1114;
+    --line:         #262b33;
+    --line-bright:  #383f4a;
+    --ink:          #e6e9ed;
+    --ink-dim:      #8b929e;
+    --ink-faint:    #565d68;
+    --amber:        #ffb454;
+    --amber-dim:    #8a6a3a;
+    --red:          #ff7a7a;
+    --depan:        #5ec8ff;
+    --belakang:     #ff7a7a;
+    --kanan:        #7ee787;
+    --kiri:         #c792ea;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0;
+    background:
+      radial-gradient(ellipse 1200px 600px at 50% -10%, #1a1d23 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--amber-dim); color:#fff; }
+
+  .wrap{
+    max-width:1320px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  .head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+    margin-bottom:26px;
+  }
+  .head-left .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 8px var(--amber);
+  }
+  .head-left h1{ margin:0; font-size:26px; font-weight:700; letter-spacing:-.01em; }
+  .head-left .sub{
+    color:var(--ink-dim); font-size:13.5px; margin-top:6px; max-width:560px; line-height:1.5;
+  }
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:380px 1fr;
+    gap:20px;
+    align-items:start;
+  }
+  @media (max-width: 920px){
+    .layout{ grid-template-columns:1fr; }
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .panel::before{
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--amber-dim), transparent);
+  }
+  .panel-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.14em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+
+  textarea{
+    width:100%;
+    min-height:220px;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    line-height:1.6;
+    padding:12px;
+    resize:vertical;
+    transition:border-color .15s ease;
+  }
+  textarea::placeholder{ color:var(--ink-faint); }
+  textarea:focus{ outline:none; border-color:var(--amber); }
+
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+    margin-top:16px;
+  }
+  .field label{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:.06em;
+    color:var(--ink-faint);
+    margin-bottom:6px;
+    text-transform:uppercase;
+  }
+  .field label .unit{ color:var(--amber-dim); }
+  .field input{
+    width:100%;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13.5px;
+    font-weight:500;
+    padding:9px 10px;
+    transition:border-color .15s ease;
+  }
+  .field input:focus{ outline:none; border-color:var(--amber); }
+  .field input:disabled{ color:var(--ink-faint); }
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-dim);
+  }
+  .toggle-row input{ accent-color:var(--amber); width:14px; height:14px; }
+
+  .btn-render{
+    width:100%;
+    background:var(--amber);
+    color:#1a1306;
+    border:none;
+    border-radius:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size:12.5px;
+    letter-spacing:.04em;
+    padding:12px;
+    cursor:pointer;
+    margin-top:18px;
+    text-transform:uppercase;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  .btn-render:hover{ filter:brightness(1.08); }
+  .btn-render:active{ transform:scale(.99); }
+
+  .meta-line{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+    margin-top:10px;
+    line-height:1.6;
+  }
+  .meta-line b{ color:var(--ink-dim); font-weight:500; }
+  .meta-line .warn{ color:var(--red); }
+
+  /* ---------- Export bar ---------- */
+  .export-bar{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+    flex-wrap:wrap;
+  }
+  .btn-export{
+    flex:1;
+    min-width:140px;
+    background:transparent;
+    border:1px solid var(--line-bright);
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:11.5px;
+    letter-spacing:.03em;
+    padding:11px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:all .15s ease;
+  }
+  .btn-export:hover:not(:disabled){ border-color:var(--amber); color:var(--amber); }
+  .btn-export:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ---------- Preview ---------- */
+  .preview-empty{
+    border:1px dashed var(--line-bright);
+    border-radius:10px;
+    padding:60px 24px;
+    text-align:center;
+    color:var(--ink-faint);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    line-height:1.7;
+  }
+  .preview-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:16px;
+  }
+  @media (max-width: 700px){
+    .preview-grid{ grid-template-columns:1fr; }
+  }
+
+  .side-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .side-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 14px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel-raised);
+  }
+  .side-name{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:.1em;
+    font-weight:600;
+  }
+  .side-name .swatch{ width:8px; height:8px; border-radius:2px; }
+  .side-meta{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    color:var(--ink-faint);
+    text-align:right;
+    line-height:1.5;
+  }
+  .side-meta .warn{ color:var(--red); }
+
+  .svg-stage{
+    background:var(--canvas);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:20px 20px;
+    background-position:center;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .svg-stage svg{ max-width:100%; height:auto; display:block; }
+
+  .toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--panel-raised);
+    border:1px solid var(--line-bright);
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    padding:11px 18px;
+    border-radius:8px;
+    opacity:0;
+    pointer-events:none;
+    transition:all .25s ease;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    z-index:50;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.warn{ border-color:#8a3a3a; color:#ff9a9a; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="head">
+      <div class="head-left">
+        <div class="eyebrow"><span class="dot"></span>Generator Pola Lubang</div>
+        <h1>Shadow Art — Pola Cetak</h1>
+        <div class="sub">Tempel koordinat dari Kalkulator Proyektor untuk menggambar posisi lubang tiap sisi, lalu ekspor sebagai templat potong/bor skala 1:1.</div>
+      </div>
+    </div>
+
+    <div class="layout">
+
+      <!-- Input panel -->
+      <div class="panel">
+        <div class="panel-label">Tempel Koordinat</div>
+        <textarea id="inputText" placeholder="# DIMENSI Z=10 X=16 Y=20&#10;&#10;DEPAN&#10;4.67,-4.27&#10;&#10;KANAN&#10;3.10,2.05"></textarea>
+
+        <div class="field-grid">
+          <div class="field">
+            <label>Tinggi <span class="unit">Z·cm</span></label>
+            <input type="number" id="dimZ" value="10" step="0.1" />
+          </div>
+          <div class="field">
+            <label>Lebar <span class="unit">X·cm</span></label>
+            <input type="number" id="dimX" value="16" step="0.1" />
+          </div>
+          <div class="field">
+            <label>Panjang <span class="unit">Y·cm</span></label>
+            <input type="number" id="dimY" value="20" step="0.1" />
+          </div>
+        </div>
+
+        <div class="field-grid" style="grid-template-columns:1fr;">
+          <div class="field">
+            <label>Diameter Lubang <span class="unit">mm</span></label>
+            <input type="number" id="holeDia" value="3" step="0.1" min="0.1" />
+          </div>
+        </div>
+
+        <label class="toggle-row">
+          <input type="checkbox" id="showLabels" checked />
+          Tampilkan label koordinat di tiap lubang
+        </label>
+
+        <div class="meta-line" id="metaInfo">Belum ada data diproses.</div>
+
+        <button class="btn-render" onclick="proses()">⚙ Render Pola</button>
+
+        <div class="export-bar">
+          <button class="btn-export" id="btnSvg" onclick="exportSVG()" disabled>↓ Unduh SVG (per sisi)</button>
+          <button class="btn-export" id="btnPng" onclick="exportPNG()" disabled>↓ Unduh PNG (per sisi)</button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div id="previewArea">
+        <div class="preview-empty">
+          Belum ada pola untuk ditampilkan.<br/>
+          Tempel koordinat di panel kiri, lalu tekan <b style="color:var(--ink-dim)">Render Pola</b>.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const sisiList = ['Depan', 'Belakang', 'Kanan', 'Kiri'];
+  const sisiColor = { Depan: '#5ec8ff', Belakang: '#ff7a7a', Kanan: '#7ee787', Kiri: '#c792ea' };
+  let lastPanels = null; // holds rendered panel data for export
+
+  function showToast(msg, warn=false){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (warn ? ' warn' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = 'toast'; }, 2400);
+  }
+
+  // ---------- Parsing ----------
+  function parseInput(text) {
+    const lines = text.split('\n').map(l => l.trim());
+    const sides = { Depan: [], Belakang: [], Kanan: [], Kiri: [] };
+    let dims = null;
+    let current = null;
+    const sideMap = { DEPAN:'Depan', BELAKANG:'Belakang', KANAN:'Kanan', KIRI:'Kiri' };
+
+    for (const raw of lines) {
+      if (!raw) continue;
+      if (raw.startsWith('#')) {
+        const m = raw.match(/Z\s*=\s*(-?[\d.]+).*X\s*=\s*(-?[\d.]+).*Y\s*=\s*(-?[\d.]+)/i);
+        if (m) dims = { z: parseFloat(m[1]), x: parseFloat(m[2]), y: parseFloat(m[3]) };
+        continue;
+      }
+      const upper = raw.toUpperCase();
+      if (sideMap[upper]) { current = sideMap[upper]; continue; }
+      const m2 = raw.match(/^(-?[\d.]+)\s*,\s*(-?[\d.]+)$/);
+      if (m2 && current) {
+        sides[current].push({ z: parseFloat(m2[1]), g: parseFloat(m2[2]) });
+      }
+    }
+    return { dims, sides };
+  }
+
+  function panelWidth(side, X, Y) {
+    return (side === 'Depan' || side === 'Belakang') ? X : Y;
+  }
+
+  // ---------- Render ----------
+  function proses() {
+    const raw = document.getElementById('inputText').value;
+    const { dims, sides } = parseInput(raw);
+
+    if (dims) {
+      document.getElementById('dimZ').value = dims.z;
+      document.getElementById('dimX').value = dims.x;
+      document.getElementById('dimY').value = dims.y;
+    }
+
+    const Z = parseFloat(document.getElementById('dimZ').value);
+    const X = parseFloat(document.getElementById('dimX').value);
+    const Y = parseFloat(document.getElementById('dimY').value);
+    const holeDiaCm = parseFloat(document.getElementById('holeDia').value) / 10;
+    const showLabels = document.getElementById('showLabels').checked;
+
+    if ([Z, X, Y].some(v => isNaN(v)) || Z <= 0 || X <= 0 || Y <= 0) {
+      showToast('Periksa kembali dimensi Z, X, Y', true);
+      return;
+    }
+    const totalPoints = sisiList.reduce((n, s) => n + sides[s].length, 0);
+    if (totalPoints === 0) {
+      showToast('Tidak ditemukan titik koordinat pada teks yang ditempel', true);
+      return;
+    }
+
+    let warnCount = 0;
+    const panels = sisiList.map(side => {
+      const width = panelWidth(side, X, Y);
+      const points = sides[side].map(p => {
+        const xc = width / 2 + p.g;
+        const yFromTop = Z - p.z;
+        const overflow = (xc - holeDiaCm/2 < 0) || (xc + holeDiaCm/2 > width) || (p.z < 0) || (p.z > Z);
+        if (overflow) warnCount++;
+        return { ...p, xc, yFromTop, overflow };
+      });
+      return { side, width, height: Z, points, color: sisiColor[side] };
+    });
+
+    lastPanels = { panels, holeDiaCm, showLabels, Z, X, Y };
+    renderPreview(lastPanels);
+
+    document.getElementById('metaInfo').innerHTML =
+      `<b>${totalPoints}</b> titik dimuat dari <b>${sisiList.filter(s=>sides[s].length).length}</b> sisi · Z=${Z} X=${X} Y=${Y} cm` +
+      (warnCount ? `<br/><span class="warn">⚠ ${warnCount} titik berada di luar batas panel</span>` : '');
+
+    document.getElementById('btnSvg').disabled = false;
+    document.getElementById('btnPng').disabled = false;
+    showToast(`Pola dirender — ${totalPoints} titik`);
+  }
+
+  function renderPreview({ panels, holeDiaCm, showLabels }) {
+    const area = document.getElementById('previewArea');
+    area.innerHTML = `<div class="preview-grid">${panels.map(p => `
+      <div class="side-card">
+        <div class="side-head">
+          <div class="side-name">
+            <span class="swatch" style="background:${p.color}"></span>
+            ${p.side.toUpperCase()}
+          </div>
+          <div class="side-meta">
+            ${p.width.toFixed(1)} × ${p.height.toFixed(1)} cm<br/>
+            ${p.points.length} titik${p.points.some(pt=>pt.overflow) ? ' · <span class="warn">cek batas</span>' : ''}
+          </div>
+        </div>
+        <div class="svg-stage">${panelPreviewSVG(p, holeDiaCm, showLabels)}</div>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  // Builds inner SVG markup (no outer <svg> wrapper) for one panel.
+  // mode.screen = true -> dark theme for on-screen preview
+  // mode.screen = false -> light/print theme for export
+  function panelInnerSVG(p, holeDiaCm, showLabels, mode) {
+    const pad = 0.6; // cm padding around drawing inside viewBox
+    const vbW = p.width + pad*2;
+    const vbH = p.height + pad*2;
+    const stroke = mode.screen ? '#383f4a' : '#000000';
+    const bg = mode.screen ? 'none' : '#ffffff';
+    const holeFill = mode.screen ? p.color : '#ffffff';
+    const holeStroke = mode.screen ? p.color : '#000000';
+    const overflowColor = '#ff3b3b';
+    const labelColor = mode.screen ? '#8b929e' : '#444444';
+    const centerColor = mode.screen ? '#383f4a' : '#999999';
+    const fontSize = Math.max(vbW, vbH) * 0.022;
+
+    let inner = '';
+    if (bg !== 'none') inner += `<rect x="0" y="0" width="${vbW}" height="${vbH}" fill="${bg}"/>`;
+    // panel border
+    inner += `<rect x="${pad}" y="${pad}" width="${p.width}" height="${p.height}" fill="none" stroke="${stroke}" stroke-width="0.04"/>`;
+    // center guide
+    inner += `<line x1="${pad + p.width/2}" y1="${pad}" x2="${pad + p.width/2}" y2="${pad + p.height}" stroke="${centerColor}" stroke-width="0.025" stroke-dasharray="0.15,0.15"/>`;
+    // holes
+    p.points.forEach(pt => {
+      const cx = pad + pt.xc;
+      const cy = pad + pt.yFromTop;
+      const r = holeDiaCm / 2;
+      const col = pt.overflow ? overflowColor : holeStroke;
+      inner += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${pt.overflow ? 'none' : holeFill}" stroke="${col}" stroke-width="0.035"/>`;
+      if (showLabels) {
+        inner += `<text x="${cx + r + 0.12}" y="${cy + fontSize*0.32}" font-family="JetBrains Mono, monospace" font-size="${fontSize}" fill="${labelColor}">${pt.z},${pt.g}</text>`;
+      }
+    });
+    // panel title (export only — screen preview already has an HTML header)
+    if (!mode.screen) {
+      inner += `<text x="${pad}" y="${pad - 0.18}" font-family="JetBrains Mono, monospace" font-size="${fontSize*1.1}" fill="#000000" font-weight="600">${p.side.toUpperCase()} — ${p.width.toFixed(1)}×${p.height.toFixed(1)}cm</text>`;
+    }
+
+    return { inner, vbW, vbH };
+  }
+
+  // Standalone SVG element (with wrapper) for screen preview of a single panel.
+  function panelPreviewSVG(p, holeDiaCm, showLabels) {
+    const { inner, vbW, vbH } = panelInnerSVG(p, holeDiaCm, showLabels, { screen:true });
+    return `<svg viewBox="0 0 ${vbW} ${vbH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+  }
+
+  // ---------- Export: one file per panel (true scale, print-ready) ----------
+  function buildPanelExportMarkup(p, holeDiaCm, showLabels) {
+    const titleSpace = 0.9;
+    const { inner, vbW, vbH } = panelInnerSVG(p, holeDiaCm, showLabels, { screen:false });
+    const totalW = vbW;
+    const totalH = vbH + titleSpace;
+    const body = `<rect x="0" y="0" width="${totalW}" height="${totalH}" fill="#ffffff"/>` +
+                 `<g transform="translate(0, ${titleSpace})">${inner}</g>`;
+    return { body, totalW, totalH };
+  }
+
+  function fileSafeName(side) {
+    return side.toLowerCase(); // depan, belakang, kanan, kiri
+  }
+
+  function exportSVG() {
+    if (!lastPanels) return;
+    const { panels, holeDiaCm, showLabels } = lastPanels;
+    const withData = panels.filter(p => p.points.length > 0);
+    if (!withData.length) { showToast('Tidak ada sisi dengan titik untuk diekspor', true); return; }
+
+    withData.forEach((p, i) => {
+      const { body, totalW, totalH } = buildPanelExportMarkup(p, holeDiaCm, showLabels);
+      const widthMM = (totalW * 10).toFixed(1);
+      const heightMM = (totalH * 10).toFixed(1);
+      const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${widthMM}mm" height="${heightMM}mm" viewBox="0 0 ${totalW} ${totalH}">${body}</svg>`;
+      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      setTimeout(() => downloadBlob(blob, `shadow-art-${fileSafeName(p.side)}.svg`), i * 150);
+    });
+    showToast(`${withData.length} file SVG diunduh — skala 1:1`);
+  }
+
+  async function exportPNG() {
+    if (!lastPanels) return;
+    const { panels, holeDiaCm, showLabels } = lastPanels;
+    const withData = panels.filter(p => p.points.length > 0);
+    if (!withData.length) { showToast('Tidak ada sisi dengan titik untuk diekspor', true); return; }
+
+    const pxPerCm = 38; // ~96dpi
+
+    for (let i = 0; i < withData.length; i++) {
+      const p = withData[i];
+      const { body, totalW, totalH } = buildPanelExportMarkup(p, holeDiaCm, showLabels);
+      const pxW = Math.round(totalW * pxPerCm);
+      const pxH = Math.round(totalH * pxPerCm);
+      const svgForRaster = `<svg xmlns="http://www.w3.org/2000/svg" width="${pxW}" height="${pxH}" viewBox="0 0 ${totalW} ${totalH}">${body}</svg>`;
+
+      await new Promise((resolve) => {
+        const blob = new Blob([svgForRaster], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = pxW; canvas.height = pxH;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, pxW, pxH);
+          ctx.drawImage(img, 0, 0, pxW, pxH);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(pngBlob => {
+            downloadBlob(pngBlob, `shadow-art-${fileSafeName(p.side)}.png`);
+            resolve();
+          }, 'image/png');
+        };
+        img.onerror = () => resolve();
+        img.src = url;
+      });
+    }
+    showToast(`${withData.length} file PNG diunduh`);
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // Auto-fill dimensions if a header is pasted, on paste event
+  document.getElementById('inputText').addEventListener('paste', () => {
+    setTimeout(() => {
+      const { dims } = parseInput(document.getElementById('inputText').value);
+      if (dims) {
+        document.getElementById('dimZ').value = dims.z;
+        document.getElementById('dimX').value = dims.x;
+        document.getElementById('dimY').value = dims.y;
+        showToast('Dimensi terdeteksi & terisi otomatis');
+      }
+    }, 0);
+  });
+</script>
+</body>
+</html>
