@@ -1,84 +1,66 @@
-# Panduan Matematika: Proyeksi Bayangan Lentera 3D (Shadow Art)
+# Dokumentasi Proyeksi Lentera 3D Bentuk Persegi Panjang
 
-Dokumen ini berisi rumus dan panduan langkah demi langkah untuk memotong 4 sisi frame lentera fisik ($16 \times 16$ cm, tinggi 8 cm) agar menghasilkan bayangan gambar yang presisi di lantai secara $360^\circ$.
-
----
-
-## 1. Konstanta & Spesifikasi Sistem
-* **Posisi Lampu (Pusat):** $(X=0, Y=10, Z=0)$ -> Tinggi lampu dari lantai = $10 \text{ cm}$.
-* **Posisi Lantai Target:** $Y = 0$
-* **Dimensi Frame Kotak:** Panjang $16 \text{ cm}$ (merentang dari $-8$ hingga $+8$ pada sumbu horizontal), Tinggi $8 \text{ cm}$.
-* **Jarak Tegak Lurus Lampu ke Dinding Frame ($d$):** Selalu $8 \text{ cm}$.
+Panduan matematis ini digunakan jika kerangka atau kotak frame yang mengitari lampu berbentuk persegi panjang (bukan kotak sama sisi), dengan asumsi lampu diletakkan tepat di tengah-tengah ruang interior lentera.
 
 ---
 
-## 2. Rumus Utama Proyeksi
+## 1. Analisis Geometri & Jarak Dinding
+Ketika bentuk lentera adalah persegi panjang (misal lebar $16 \text{ cm} \times \text{panjang } 20 \text{ cm}$), jarak tegak lurus ($d$) dari titik pusat lampu menuju masing-masing sisi dinding akan terbagi menjadi dua nilai:
 
-Untuk memetakan titik koordinat bayangan yang diinginkan di lantai $(X_{\text{lantai}}, Z_{\text{lantai}})$ menjadi titik potong pada dinding frame $(w_{\text{frame}}, y_{\text{frame}})$:
+* **Sisi DEPAN & BELAKANG (Sumbu $\pm X$):** Jarak tegak lurus ($d_x$) = $\frac{\text{Total Lebar Sumbu X}}{2} = \frac{16}{2} = \mathbf{8 \text{ cm}}$
+  *(Catatan: Lembaran fisik frame sisi ini memiliki lebar total sesuai Sumbu Z, yaitu $20 \text{ cm}$)*
 
-### A. Aturan Pemilihan Sisi Dinding
-Bandingkan nilai mutlak $|X_{\text{lantai}}|$ dan $|Z_{\text{lantai}}|$ untuk menentukan mika/papan sisi mana yang harus dipotong:
-* **Sisi DEPAN (Sumbu $+X$):** Jika $X$ positif dan $|X| \geq |Z|$
-* **Sisi BELAKANG (Sumbu $-X$):** Jika $X$ negatif dan $|X| \geq |Z|$
-* **Sisi KANAN (Sumbu $+Z$):** Jika $Z$ positif dan $|Z| > |X|$
-* **Sisi KIRI (Sumbu $-Z$):** Jika $Z$ negatif dan $|Z| > |X|$
+* **Sisi KANAN & KIRI (Sumbu $\pm Z$):** Jarak tegak lurus ($d_z$) = $\frac{\text{Total Panjang Sumbu Z}}{2} = \frac{20}{2} = \mathbf{10 \text{ cm}}$
+  *(Catatan: Lembaran fisik frame sisi ini memiliki lebar total sesuai Sumbu X, yaitu $16 \text{ cm}$)*
 
-### B. Rumus Koordinat Potong Frame
+---
 
-Setelah memilih sisi dinding, gunakan salah satu pasang rumus di bawah ini:
+## 2. Rumus Proyeksi Multi-Konstanta
+
+Untuk memetakan target bayangan di lantai $(X_{\text{lantai}}, Z_{\text{lantai}})$ ke koordinat potongan fisik frame $(w_{\text{frame}}, y_{\text{frame}})$:
+
+### A. Aturan Menentukan Sisi Dinding (Skala Persegi Panjang)
+Bandingkan rasio komponen koordinat lantai terhadap jarak dinding:
+* Jika $|X_{\text{lantai}}| \times d_z \geq |Z_{\text{lantai}}| \times d_x$, maka cahaya jatuh di sisi **DEPAN / BELAKANG**.
+  * **DEPAN:** Jika $X_{\text{lantai}}$ bernilai positif (+).
+  * **BELAKANG:** Jika $X_{\text{lantai}}$ bernilai negatif (-).
+* Jika $|Z_{\text{lantai}}| \times d_x > |X_{\text{lantai}}| \times d_z$, maka cahaya jatuh di sisi **KANAN / KIRI**.
+  * **KANAN:** Jika $Z_{\text{lantai}}$ bernilai positif (+).
+  * **KIRI:** Jika $Z_{\text{lantai}}$ bernilai negatif (-).
+
+### B. Rumus Substitusi Koordinat
 
 #### 1. Jika jatuh di Sisi DEPAN atau BELAKANG:
+Gunakan pengali jarak frame $d_x = 8$:
 * **Tinggi Potongan ($y_{\text{frame}}$):**
-  $$y_{\text{frame}} = 10 - \left( \frac{8}{|X_{\text{lantai}}|} \times 10 \right)$$
-* **Lebar Samping ($z_{\text{frame}}$):**
+  $$y_{\text{frame}} = Y_{\text{lampu}} - \left( \frac{8}{|X_{\text{lantai}}|} \times Y_{\text{lampu}} \right)$$
+* **Lebar Samping Sumbu $z$ ($z_{\text{frame}}$):**
   $$z_{\text{frame}} = \frac{8}{|X_{\text{lantai}}|} \times Z_{\text{lantai}}$$
 
 #### 2. Jika jatuh di Sisi KANAN atau KIRI:
+Gunakan pengali jarak frame $d_z = 10$:
 * **Tinggi Potongan ($y_{\text{frame}}$):**
-  $$y_{\text{frame}} = 10 - \left( \frac{8}{|Z_{\text{lantai}}|} \times 10 \right)$$
-* **Lebar Samping ($x_{\text{frame}}$):**
-  $$x_{\text{frame}} = \frac{8}{|Z_{\text{lantai}}|} \times X_{\text{lantai}}$$
-
-> **Catatan Penting Posisi Fisik:**
-> * Nilai $y_{\text{frame}}$ diukur murni **dari dasar/lantai frame ke atas**.
-> * Nilai lebar samping ($z_{\text{frame}}$ atau $x_{\text{frame}}$) diukur **dari garis tengah vertikal (titik 0)** pada bilah mika tersebut. Nilai $(+)$ berarti geser ke kanan, nilai $(-)$ berarti geser ke kiri.
+  $$y_{\text{frame}} = Y_{\text{lampu}} - \left( \frac{10}{|Z_{\text{lantai}}|} \times Y_{\text{lampu}} \right)$$
+* **Lebar Samping Sumbu $x$ ($x_{\text{frame}}$):**
+  $$x_{\text{frame}} = \frac{10}{|Z_{\text{lantai}}|} \times X_{\text{lantai}}$$
 
 ---
 
-## 3. Contoh Cara Hitung (Simulasi Kasus)
+## 3. Contoh Kasus Nyata
 
-### Kasus 1: Titik Gambar di Area Samping Kanan Lantai
-Kita ingin membuat bayangan di lantai pada koordinat **$X = 12, Z = 24$**.
+**Input Kondisi:** * Tinggi Lampu = $10 \text{ cm}$
+* Ukuran Lentera = $16 \times 20 \text{ cm}$ ($d_x = 8, d_z = 10$)
+* Target Bayangan Lantai = $(X = -12, Z = 24)$
 
-1. **Penentuan Sisi Dinding:**
-   * $|X| = 12$, $|Z| = 24$.
-   * Karena $|Z| > |X|$ dan $Z$ bernilai positif ($+24$), maka titik ini jatuh di **Sisi KANAN**.
+**Langkah Penyelesaian:**
+1. **Cek Rasio Dinding:**
+   * $|X| \times d_z = |-12| \times 10 = 120$
+   * $|Z| \times d_x = |24| \times 8 = 192$
+   * Karena $192 > 120$, maka bayangan jatuh ke area **KANAN/KIRI**. Karena nilai $Z$ positif ($+24$), maka pengerjaan dilakukan pada frame **Sisi KANAN**.
 
-2. **Perhitungan:**
-   * Gunakan variabel pembagi utama yaitu $|Z| = 24$.
-   * **Hitung Tinggi ($y_{\text{frame}}$):**
-     $$y_{\text{frame}} = 10 - \left( \frac{8}{24} \times 10 \right) = 10 - 3.33 = \mathbf{6.67 \text{ cm}}$$
-   * **Hitung Lebar Samping ($x_{\text{frame}}$):**
-     $$x_{\text{frame}} = \frac{8}{24} \times 12 = \mathbf{4 \text{ cm}}$$
+2. **Hitung Koordinat Potong di Frame Kanan:**
+   * **Tinggi ($y$):** $y = 10 - (\frac{10}{24} \times 10) = 10 - 4.17 = \mathbf{5.83 \text{ cm}}$
+   * **Lebar Samping ($x$):** $x = \frac{10}{24} \times (-12) = \mathbf{-5.00 \text{ cm}}$
 
-3. **Eksekusi Fisik:**
-   Pada bilah mika **Sisi Kanan**, ambil penggaris lalu tandai titik pada **tinggi $6.67 \text{ cm}$** dari bawah, dan **geser sejauh $4 \text{ cm}$ ke kanan** dari garis tengah mika.
-
----
-
-### Kasus 2: Titik Gambar Pas di Sudut Pertemuan (Diagonal)
-Kita ingin membuat bayangan di lantai tepat di sudut diagonal pada koordinat **$X = -20, Z = 20$**.
-
-1. **Penentuan Sisi Dinding:**
-   * $|X| = |-20| = 20$, $|Z| = 20$.
-   * Karena nilainya sama besar ($20 = 20$), titik ini berada tepat di **garis lipatan/pertemuan sudut** antara Sisi BELAKANG (karena $X$ negatif) dan Sisi KANAN (karena $Z$ positif). Kita bisa gunakan salah satu rumus untuk membuktikannya.
-
-2. **Perhitungan (Menggunakan Perspektif Sisi BELAKANG):**
-   * Pembagi utama $|X| = 20$.
-   * **Hitung Tinggi ($y_{\text{frame}}$):**
-     $$y_{\text{frame}} = 10 - \left( \frac{8}{20} \times 10 \right) = 10 - 4 = \mathbf{6 \text{ cm}}$$
-   * **Hitung Lebar Samping ($z_{\text{frame}}$):**
-     $$z_{\text{frame}} = \frac{8}{20} \times 20 = \mathbf{8 \text{ cm}}$$
-
-3. **Eksekusi Fisik:**
-   Titik akan berada di **tinggi $6 \text{ cm}$** dan **geser $8 \text{ cm}$ ke kanan** dari garis tengah. Karena lebar setengah mika adalah $8 \text{ cm}$, posisi ini berada pas di ujung pinggir potongan mika, yang nantinya akan menempel sempurna dengan pinggiran mika Sisi Kanan pada ketinggian yang sama.
+3. **Cara Plot pada Bahan:**
+   Ambil papan frame Sisi Kanan (yang berukuran lebar asli $16 \text{ cm}$), buat garis tengah vertikal. Ukur tinggi **$5.83 \text{ cm}$** dari dasar bawah frame, lalu bergeserlah sejauh **$5 \text{ cm}$ ke arah Kiri** (karena hasilnya bernilai negatif). Tandai titik tersebut sebagai titik potong/lubang cahaya.
