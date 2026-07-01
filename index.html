@@ -488,6 +488,8 @@
       lebarFrame = (dY / absY) * tX;
     }
 
+    if (sisi === "Belakang" || sisi === "Kanan") { lebarFrame *= -1; }
+
     if (isNaN(zFrame) || zFrame < 0) { showToast("Peringatan: Proyeksi melesat!", true); return; }
 
     data[sisi].push({ z: zFrame.toFixed(2), g: lebarFrame.toFixed(2) });
