@@ -20,8 +20,8 @@
     --amber:        #ffb454;
     --amber-dim:    #8a6a3a;
     --red:          #ff7a7a;
-    --depan:        #5ec8ff;
-    --belakang:     #ff7a7a;
+    --atas:        #5ec8ff;
+    --bawah:     #ff7a7a;
     --kanan:        #7ee787;
     --kiri:         #c792ea;
   }
@@ -328,7 +328,7 @@
       <!-- Input panel -->
       <div class="panel">
         <div class="panel-label">Tempel Koordinat</div>
-        <textarea id="inputText" placeholder="# DIMENSI Z=10 X=16 Y=20&#10;&#10;DEPAN&#10;4.67,-4.27&#10;&#10;KANAN&#10;3.10,2.05"></textarea>
+        <textarea id="inputText" placeholder="# DIMENSI Z=10 X=16 Y=20&#10;&#10;ATAS&#10;4.67,-4.27&#10;&#10;KANAN&#10;3.10,2.05"></textarea>
 
         <div class="field-grid">
           <div class="field">
@@ -348,12 +348,12 @@
         <div class="field-grid" style="grid-template-columns:1fr;">
           <div class="field">
             <label>Diameter Lubang <span class="unit">mm</span></label>
-            <input type="number" id="holeDia" value="3" step="0.1" min="0.1" />
+            <input type="number" id="holeDia" value="0.5" step="0.1" min="0.1" />
           </div>
         </div>
 
         <label class="toggle-row">
-          <input type="checkbox" id="showLabels" checked />
+          <input type="checkbox" id="showLabels" />
           Tampilkan label koordinat di tiap lubang
         </label>
 
@@ -381,8 +381,8 @@
   <div class="toast" id="toast"></div>
 
 <script>
-  const sisiList = ['Depan', 'Belakang', 'Kanan', 'Kiri'];
-  const sisiColor = { Depan: '#5ec8ff', Belakang: '#ff7a7a', Kanan: '#7ee787', Kiri: '#c792ea' };
+  const sisiList = ['Atas', 'Bawah', 'Kanan', 'Kiri'];
+  const sisiColor = { Atas: '#5ec8ff', Bawah: '#ff7a7a', Kanan: '#7ee787', Kiri: '#c792ea' };
   let lastPanels = null; // holds rendered panel data for export
 
   function showToast(msg, warn=false){
@@ -396,10 +396,10 @@
   // ---------- Parsing ----------
   function parseInput(text) {
     const lines = text.split('\n').map(l => l.trim());
-    const sides = { Depan: [], Belakang: [], Kanan: [], Kiri: [] };
+    const sides = { Atas: [], Bawah: [], Kanan: [], Kiri: [] };
     let dims = null;
     let current = null;
-    const sideMap = { DEPAN:'Depan', BELAKANG:'Belakang', KANAN:'Kanan', KIRI:'Kiri' };
+    const sideMap = { ATAS:'Atas', BAWAH:'Bawah', KANAN:'Kanan', KIRI:'Kiri' };
 
     for (const raw of lines) {
       if (!raw) continue;
@@ -419,7 +419,7 @@
   }
 
   function panelWidth(side, X, Y) {
-    return (side === 'Depan' || side === 'Belakang') ? X : Y;
+    return (side === 'Atas' || side === 'Bawah') ? X : Y;
   }
 
   // ---------- Render ----------
@@ -552,7 +552,7 @@
   }
 
   function fileSafeName(side) {
-    return side.toLowerCase(); // depan, belakang, kanan, kiri
+    return side.toLowerCase(); // atas, bawah, kanan, kiri
   }
 
   function exportSVG() {

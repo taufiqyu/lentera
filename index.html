@@ -18,8 +18,8 @@
     --ink-faint:    #565d68;
     --amber:        #ffb454;
     --amber-dim:    #8a6a3a;
-    --depan:        #5ec8ff;
-    --belakang:     #ff7a7a;
+    --atas:        #5ec8ff;
+    --bawah:     #ff7a7a;
     --kanan:        #7ee787;
     --kiri:         #c792ea;
   }
@@ -322,8 +322,8 @@
   }
 
   /* per-side accent bars */
-  .side-card[data-side="Depan"] .side-head{ border-bottom-color:#1f3848; }
-  .side-card[data-side="Belakang"] .side-head{ border-bottom-color:#3f2424; }
+  .side-card[data-side="Atas"] .side-head{ border-bottom-color:#1f3848; }
+  .side-card[data-side="Bawah"] .side-head{ border-bottom-color:#3f2424; }
   .side-card[data-side="Kanan"] .side-head{ border-bottom-color:#23391f; }
   .side-card[data-side="Kiri"] .side-head{ border-bottom-color:#332540; }
 
@@ -382,11 +382,11 @@
         <div class="field-group">
           <div class="field">
             <label>Lebar <span class="unit">X · cm</span></label>
-            <input type="number" id="lebarX" value="16" step="0.1" />
+            <input type="number" id="lebarX" value="12" step="0.1" />
           </div>
           <div class="field">
             <label>Panjang <span class="unit">Y · cm</span></label>
-            <input type="number" id="panjangY" value="20" step="0.1" />
+            <input type="number" id="panjangY" value="16" step="0.1" />
           </div>
           <div class="field" aria-hidden="true"></div>
         </div>
@@ -416,9 +416,9 @@
   <div class="toast" id="toast"></div>
 
 <script>
-  const sisiList = ['Depan', 'Belakang', 'Kanan', 'Kiri'];
-  const sisiColor = { Depan: 'var(--depan)', Belakang: 'var(--belakang)', Kanan: 'var(--kanan)', Kiri: 'var(--kiri)' };
-  let data = { Depan: [], Belakang: [], Kanan: [], Kiri: [] };
+  const sisiList = ['Atas', 'Bawah', 'Kanan', 'Kiri'];
+  const sisiColor = { Atas: 'var(--atas)', Bawah: 'var(--bawah)', Kanan: 'var(--kanan)', Kiri: 'var(--kiri)' };
+  let data = { Atas: [], Bawah: [], Kanan: [], Kiri: [] };
 
   const container = document.getElementById('sides-container');
   container.innerHTML = sisiList.map(s => `
@@ -471,7 +471,7 @@
 
     let sisi, zFrame, lebarFrame;
     if (absX === 0) {
-      sisi = tY >= 0 ? "Depan" : "Belakang";
+      sisi = tY >= 0 ? "Atas" : "Bawah";
       zFrame = Z - (dY / absY) * Z;
       lebarFrame = 0;
     } else if (absY === 0) {
@@ -483,12 +483,12 @@
       zFrame = Z - (dX / absX) * Z;
       lebarFrame = (dX / absX) * tY;
     } else {
-      sisi = tY >= 0 ? "Depan" : "Belakang";
+      sisi = tY >= 0 ? "Atas" : "Bawah";
       zFrame = Z - (dY / absY) * Z;
       lebarFrame = (dY / absY) * tX;
     }
 
-    if (sisi === "Belakang" || sisi === "Kanan") { lebarFrame *= -1; }
+    if (sisi === "Bawah" || sisi === "Kanan") { lebarFrame *= -1; }
 
     if (isNaN(zFrame) || zFrame < 0) { showToast("Peringatan: Proyeksi melesat!", true); return; }
 
