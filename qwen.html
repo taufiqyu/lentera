@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shadow Art — Cetak Siluet Solid</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:           #0b0d10;
+    --panel:        #14171c;
+    --panel-raised: #1a1e24;
+    --canvas:       #0e1114;
+    --line:         #262b33;
+    --line-bright:  #383f4a;
+    --ink:          #e6e9ed;
+    --ink-dim:      #8b929e;
+    --ink-faint:    #565d68;
+    --amber:        #ffb454;
+    --amber-dim:    #8a6a3a;
+    --red:          #ff7a7a;
+    --green:        #7ee787;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: radial-gradient(ellipse 1200px 600px at 50% -10%, #1a1d23 0%, transparent 60%), var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--amber-dim); color:#fff; }
+
+  .wrap{ max-width:1320px; margin:0 auto; padding:28px 20px 80px; }
+
+  /* ---------- Header ---------- */
+  .head{ border-bottom:1px solid var(--line); padding-bottom:20px; margin-bottom:26px; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.18em;
+    color:var(--amber); text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber); }
+  .head h1{ margin:0; font-size:26px; font-weight:700; letter-spacing:-.01em; }
+  .head .sub{ color:var(--ink-dim); font-size:13.5px; margin-top:6px; max-width:640px; line-height:1.55; }
+
+  /* ---------- Layout ---------- */
+  .layout{ display:grid; grid-template-columns:380px 1fr; gap:20px; align-items:start; }
+  @media (max-width: 960px){ .layout{ grid-template-columns:1fr; } }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:20px; position:relative; overflow:hidden;
+  }
+  .panel::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--amber-dim), transparent);
+  }
+  .panel-label{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.14em;
+    color:var(--ink-faint); text-transform:uppercase; margin-bottom:14px;
+  }
+
+  /* upload dropzone */
+  .dropzone{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    width:100%; border:1.5px dashed var(--line-bright); border-radius:10px;
+    padding:32px 16px; text-align:center; cursor:pointer; transition:all .15s ease;
+  }
+  .dropzone:hover, .dropzone.drag{ border-color:var(--amber); background:rgba(255,180,84,0.04); }
+  .dropzone input{ display:none; }
+  .dropzone .icon{
+    flex-shrink:0; width:38px; height:38px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%; background:var(--bg); border:1px solid var(--line-bright);
+    color:var(--ink-faint); transition:all .15s ease;
+  }
+  .dropzone:hover .icon, .dropzone.drag .icon{ border-color:var(--amber); color:var(--amber); }
+  .dropzone .icon svg{ width:17px; height:17px; }
+  .dropzone .main-text{ font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--ink-dim); font-weight:500; }
+  .dropzone .sub-text{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-faint); margin-top:5px; max-width:260px; }
+
+  /* file loaded card */
+  .file-card{ display:none; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--bg); }
+  .file-card.show{ display:block; }
+  .file-thumb{
+    background:var(--canvas);
+    background-image:
+      linear-gradient(45deg, var(--line) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--line) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--line) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--line) 75%);
+    background-size:14px 14px; background-position:0 0, 0 7px, 7px -7px, -7px 0px;
+    display:flex; align-items:center; justify-content:center; padding:14px; min-height:120px;
+  }
+  .file-thumb img{ max-width:100%; max-height:160px; display:block; border-radius:3px; }
+  .file-info{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 14px; border-top:1px solid var(--line); background:var(--panel-raised);
+  }
+  .file-info .details{ min-width:0; }
+  .file-info .fname{ font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .file-info .fmeta{ font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--ink-faint); margin-top:3px; }
+  .btn-change{
+    flex-shrink:0; background:transparent; border:1px solid var(--line-bright); color:var(--ink-dim);
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.03em;
+    border-radius:6px; padding:7px 12px; cursor:pointer; text-transform:uppercase; transition:all .15s ease;
+  }
+  .btn-change:hover{ border-color:var(--amber); color:var(--amber); }
+
+  .section-divider{ height:1px; background:var(--line); margin:18px 0; }
+
+  .field-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .field label{ display:block; font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.06em; color:var(--ink-faint); margin-bottom:6px; text-transform:uppercase; }
+  .field label .unit{ color:var(--amber-dim); }
+  .field input[type=number]{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); font-family:'JetBrains Mono', monospace; font-size:13.5px; font-weight:500;
+    padding:9px 10px; transition:border-color .15s ease;
+  }
+  .field input[type=number]:focus{ outline:none; border-color:var(--amber); }
+  .field input[type=range]{ width:100%; accent-color:var(--amber); }
+  .field .range-val{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--amber); float:right; }
+
+  .toggle-row{
+    display:flex; align-items:center; gap:8px; margin-top:12px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-dim); cursor:pointer;
+  }
+  .toggle-row input{ accent-color:var(--amber); width:14px; height:14px; cursor:pointer; }
+
+  .btn-render{
+    width:100%; background:var(--amber); color:#1a1306; border:none; border-radius:6px;
+    font-family:'JetBrains Mono', monospace; font-weight:600; font-size:12.5px; letter-spacing:.04em;
+    padding:12px; cursor:pointer; margin-top:18px; text-transform:uppercase;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  .btn-render:hover:not(:disabled){ filter:brightness(1.08); }
+  .btn-render:active:not(:disabled){ transform:scale(.99); }
+  .btn-render:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .meta-line{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-faint); margin-top:12px; line-height:1.65; }
+  .meta-line b{ color:var(--ink-dim); font-weight:500; }
+
+  /* ---------- Export bar ---------- */
+  .export-bar{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .btn-export{
+    flex:1; min-width:140px; background:transparent; border:1px solid var(--line-bright); color:var(--ink);
+    font-family:'JetBrains Mono', monospace; font-weight:500; font-size:11.5px; letter-spacing:.03em;
+    padding:11px 14px; border-radius:6px; cursor:pointer; text-transform:uppercase; transition:all .15s ease;
+  }
+  .btn-export:hover:not(:disabled){ border-color:var(--amber); color:var(--amber); }
+  .btn-export:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ---------- Preview ---------- */
+  .preview-empty{
+    border:1px dashed var(--line-bright); border-radius:10px; padding:70px 24px;
+    text-align:center; color:var(--ink-faint); font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.7;
+  }
+  .stage-card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:16px; }
+  .stage-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; border-bottom:1px solid var(--line); background:var(--panel-raised);
+  }
+  .stage-name{ font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.1em; font-weight:600; }
+  .stage-meta{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-faint); }
+  .canvas-stage{
+    background:var(--canvas);
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:20px 20px; background-position:center;
+    padding:16px; display:flex; align-items:center; justify-content:center; overflow:auto;
+  }
+  .canvas-stage canvas{ max-width:100%; height:auto; display:block; }
+
+  /* ============================================ */
+  /* Preview grid — LIGHT THEME (technical paper) */
+  /* ============================================ */
+  .preview-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; }
+  @media (max-width: 700px){ .preview-grid{ grid-template-columns:1fr; } }
+
+  .side-card{
+    border-radius:10px; overflow:hidden;
+    background:#faf9f5;          /* cream paper */
+    border:1px solid #d4d0c5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .side-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px;
+    border-bottom:1px solid #d4d0c5;
+    background:#f0eee6;
+  }
+  .side-name{
+    display:flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px;
+    letter-spacing:.1em; font-weight:600; color:#2c2c2c;
+  }
+  .side-name .swatch{ width:10px; height:10px; border-radius:2px; border:1px solid rgba(0,0,0,0.15); }
+  .side-meta{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px;
+    color:#666; text-align:right; line-height:1.5;
+  }
+  .side-meta .warn{ color:#b8372e; font-weight:600; }
+
+  /* Light stage — paper grid background */
+  .paper-stage{
+    background:#faf9f5;
+    background-image:
+      linear-gradient(#e8e5db 1px, transparent 1px),
+      linear-gradient(90deg, #e8e5db 1px, transparent 1px);
+    background-size:20px 20px;
+    background-position:center;
+    padding:16px;
+    display:flex; align-items:center; justify-content:center; overflow:auto;
+  }
+  .paper-stage canvas{
+    max-width:100%; height:auto; display:block;
+    box-shadow: 0 2px 10px rgba(60,50,30,0.08);
+    image-rendering: auto;
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--panel-raised); border:1px solid var(--line-bright); color:var(--ink);
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; padding:11px 18px; border-radius:8px;
+    opacity:0; pointer-events:none; transition:all .25s ease; box-shadow:0 8px 24px rgba(0,0,0,0.4); z-index:50;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.warn{ border-color:#8a3a3a; color:#ff9a9a; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow"><span class="dot"></span>Siluet Solid · Raycasting</div>
+      <h1>Shadow Art — Deteksi Siluet</h1>
+      <div class="sub">Upload gambar hitam-putih persegi. Sistem akan menggunakan pemetaan terbalik (inverse projection) untuk merender siluet blok pada setiap panel cetak.</div>
+    </div>
+
+    <div class="layout">
+      <!-- Controls -->
+      <div class="panel">
+        <div class="panel-label">1 · Upload Gambar</div>
+        <label class="dropzone" id="dropzone">
+          <span class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 16V4M12 4l-4 4M12 4l4 4"/>
+              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+            </svg>
+          </span>
+          <div class="main-text">Tap untuk pilih gambar</div>
+          <div class="sub-text">atau seret file ke sini · PNG / JPG, latar persegi</div>
+          <input type="file" id="fileInput" accept="image/*" />
+        </label>
+
+        <div class="file-card" id="fileCard">
+          <div class="file-thumb"><img id="thumbImg" alt="pratinjau" /></div>
+          <div class="file-info">
+            <div class="details">
+              <div class="fname" id="fname"></div>
+              <div class="fmeta" id="fmeta"></div>
+            </div>
+            <button class="btn-change" onclick="document.getElementById('fileInput').click()">Ganti</button>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="panel-label">2 · Parameter Gambar</div>
+        <div class="field">
+          <label>Ambang Hitam/Putih <span class="range-val" id="threshVal">128</span></label>
+          <input type="range" id="threshold" min="1" max="254" value="128" />
+          <div class="sub-text" style="margin-top:4px;">Piksel lebih gelap = siluet (solid)</div>
+        </div>
+        <label class="toggle-row"><input type="checkbox" id="invertColor" /> Balik warna (jika latar asli hitam)</label>
+        <label class="toggle-row"><input type="checkbox" id="flipX" /> Balik sumbu X (Cermin horizontal)</label>
+        <label class="toggle-row"><input type="checkbox" id="flipY" /> Balik sumbu Y (Cermin vertikal)</label>
+
+        <div class="section-divider"></div>
+
+        <div class="panel-label">3 · Dimensi Bingkai</div>
+        <div class="field-grid">
+          <div class="field"><label>Z (Tinggi) <span class="unit">cm</span></label><input type="number" id="dimZ" value="10" step="0.1" /></div>
+          <div class="field"><label>X (Lebar) <span class="unit">cm</span></label><input type="number" id="dimX" value="12" step="0.1" /></div>
+          <div class="field"><label>Y (Panjang) <span class="unit">cm</span></label><input type="number" id="dimY" value="16" step="0.1" /></div>
+        </div>
+        <div class="field" style="margin-top:12px;">
+            <label>Resolusi Render <span class="unit">px/cm</span> <span class="range-val" id="resVal">100</span></label>
+            <input type="range" id="renderRes" min="10" max="200" step="5" value="100" />
+            <div class="sub-text" style="margin-top:4px;">Resolusi panel hasil (semakin besar makin mulus tapi lebih berat diproses)</div>
+        </div>
+
+        <label class="toggle-row" style="margin-top:16px;"><input type="checkbox" id="showLabels" checked /> Tampilkan label & dimensi (gbr. teknik)</label>
+
+        <button class="btn-render" id="btnProses" onclick="renderSemua()" disabled>⚙ Deteksi &amp; Render Siluet</button>
+
+        <div class="meta-line" id="metaInfo" style="text-align: center; margin-top: 14px;"></div>
+
+        <div class="export-bar">
+          <button class="btn-export" id="btnPng" onclick="exportPNG()" disabled>↓ PNG (polos)</button>
+          <button class="btn-export" id="btnPngFramed" onclick="exportPNGFramed()" disabled>↓ PNG + Frame</button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div>
+        <div class="stage-card" id="previewCard" style="display:none;">
+          <div class="stage-head">
+            <div class="stage-name">MASK BINER SUMBER</div>
+            <div class="stage-meta" id="previewMeta"></div>
+          </div>
+          <div class="canvas-stage"><canvas id="viewCanvas" style="max-height: 240px; border:none;"></canvas></div>
+        </div>
+
+        <div id="emptyPreview" class="preview-empty">
+          Belum ada hasil.<br/>Upload gambar lalu tekan <b style="color:var(--ink-dim)">Deteksi &amp; Render Siluet</b>.
+        </div>
+
+        <div id="polaPreviewArea"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  let loadedImage = null;
+  let workCanvas = document.createElement('canvas');
+  let workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+  const MAX_DIM = 800;
+  const sisiList = ['Atas', 'Bawah', 'Kanan', 'Kiri'];
+  const sisiColor = { Atas: '#3b8ed0', Bawah: '#d04a3b', Kanan: '#3a9e5a', Kiri: '#8b5fd0' };
+
+  let renderedCanvases = {};
+  let renderedPanelData = [];
+  let framedCanvases = {}; // cache canvas ber-frame per sisi
+
+  function showToast(msg, warn=false){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (warn ? ' warn' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = 'toast'; }, 2600);
+  }
+
+  // ---------- UI wiring ----------
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault(); dropzone.classList.remove('drag');
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById('threshold').addEventListener('input', e => document.getElementById('threshVal').textContent = e.target.value);
+  document.getElementById('renderRes').addEventListener('input', e => document.getElementById('resVal').textContent = e.target.value);
+
+  function loadFile(file) {
+    if (!file.type.startsWith('image/')) { showToast('File harus berupa gambar', true); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        loadedImage = img;
+        document.getElementById('btnProses').disabled = false;
+        document.getElementById('thumbImg').src = e.target.result;
+        document.getElementById('fname').textContent = file.name;
+        document.getElementById('fmeta').textContent = `${img.naturalWidth}×${img.naturalHeight}px`;
+        document.getElementById('dropzone').style.display = 'none';
+        document.getElementById('fileCard').classList.add('show');
+        showToast('Gambar dimuat — atur dimensi lalu tekan Render');
+      };
+      img.onerror = () => showToast('Gagal membaca gambar', true);
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- Ekstrak Gambar menjadi Matriks Biner ----------
+  function buildBinary() {
+    let w = loadedImage.naturalWidth, h = loadedImage.naturalHeight;
+    if (Math.max(w, h) > MAX_DIM) {
+      const s = MAX_DIM / Math.max(w, h);
+      w = Math.round(w * s); h = Math.round(h * s);
+    }
+    workCanvas.width = w; workCanvas.height = h;
+    workCtx.drawImage(loadedImage, 0, 0, w, h);
+
+    const imgData = workCtx.getImageData(0, 0, w, h);
+    const px = imgData.data;
+    const threshold = parseInt(document.getElementById('threshold').value, 10);
+    const invert = document.getElementById('invertColor').checked;
+
+    const bin = new Uint8Array(w * h);
+    for (let i = 0, p = 0; i < px.length; i += 4, p++) {
+      const lum = 0.299*px[i] + 0.587*px[i+1] + 0.114*px[i+2];
+      let isDark = lum < threshold;
+      if (invert) isDark = !isDark;
+      bin[p] = isDark ? 1 : 0;
+    }
+    return { bin, w, h, imgData };
+  }
+
+  // ---------- Rumus Raycasting (Inverse Projection) ----------
+  function inverseProyeksi(sisi, Z, X, Y, zFrame, g) {
+    const dX = X / 2, dY = Y / 2;
+    const k = 1 - (zFrame / Z);
+    if (k <= 0) return null;
+
+    let tX = 0, tY = 0;
+    switch (sisi) {
+      case 'Atas':   tX =  g / k;  tY =  dY / k; break;
+      case 'Bawah':  tX = -g / k;  tY = -dY / k; break;
+      case 'Kanan':  tX =  dX / k; tY = -g / k;  break;
+      case 'Kiri':   tX = -dX / k; tY =  g / k;  break;
+    }
+    return { tX, tY };
+  }
+
+  // ================================================================
+  //  Cek apakah siluet menyentuh tepi panel (overflow indicator)
+  // ================================================================
+  function checkEdgeHits(canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const data = ctx.getImageData(0, 0, w, h).data;
+    const isDark = (idx) => data[idx*4] < 128;
+
+    let top = false, bottom = false, left = false, right = false;
+    for (let x = 0; x < w; x++) {
+      if (isDark(x))              { top = true; break; }
+    }
+    for (let x = 0; x < w; x++) {
+      if (isDark((h-1)*w + x))    { bottom = true; break; }
+    }
+    for (let y = 0; y < h; y++) {
+      if (isDark(y*w))            { left = true; break; }
+    }
+    for (let y = 0; y < h; y++) {
+      if (isDark(y*w + w - 1))    { right = true; break; }
+    }
+    return { top, bottom, left, right };
+  }
+
+  // ================================================================
+  //  CANVAS RENDERING — Technical Drawing Style (Light Theme)
+  // ================================================================
+  function createFramedCanvas(panelData, showLabels) {
+    const {
+      canvas: srcCanvas, side, widthCm, heightCm, color,
+      solidPixels, totalPixels, pxPerCm, hasOverflow, edges
+    } = panelData;
+
+    const srcW = srcCanvas.width;
+    const srcH = srcCanvas.height;
+
+    // Layout padding
+    const PAD_TOP    = showLabels ? 54 : 16;
+    const PAD_BOTTOM = showLabels ? 38 : 16;
+    const PAD_LEFT   = showLabels ? 60 : 16;
+    const PAD_RIGHT  = showLabels ? 24 : 16;
+
+    const totalW = srcW + PAD_LEFT + PAD_RIGHT;
+    const totalH = srcH + PAD_TOP + PAD_BOTTOM;
+
+    const c = document.createElement('canvas');
+    c.width = totalW;
+    c.height = totalH;
+    const ctx = c.getContext('2d');
+
+    // ---------- 1. Paper background ----------
+    ctx.fillStyle = '#faf9f5';
+    ctx.fillRect(0, 0, totalW, totalH);
+
+    // Subtle engineering grid
+    if (showLabels) {
+      ctx.strokeStyle = '#ece9df';
+      ctx.lineWidth = 0.5;
+      const gridSize = 20;
+      for (let x = 0; x <= totalW; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, totalH); ctx.stroke();
+      }
+      for (let y = 0; y <= totalH; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(totalW, y); ctx.stroke();
+      }
+    }
+
+    const imgX = PAD_LEFT;
+    const imgY = PAD_TOP;
+
+    // ---------- 2. Draw rendered panel (silhouette) ----------
+    ctx.drawImage(srcCanvas, imgX, imgY);
+
+    // ---------- 3. Panel border (frame) ----------
+    ctx.strokeStyle = '#2c2c2c';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(imgX + 0.5, imgY + 0.5, srcW, srcH);
+
+    if (!showLabels) return c;
+
+    // ---------- Colors ----------
+    const dimColor   = '#1a6fb5';   // engineering blue
+    const extColor   = 'rgba(26,111,181,0.35)';
+    const textColor  = '#2c2c2c';
+    const faintColor = '#777';
+    const warnColor  = '#b8372e';
+
+    // Font setup — load font first, fallback to monospace
+    const monoFont = '"JetBrains Mono", ui-monospace, monospace';
+
+    const tickLen = 5;
+
+    // =====================================================
+    //  4. TOP DIMENSION LINE (width)
+    // =====================================================
+    const topY = imgY - 18;
+
+    // Extension lines (thin, from panel edge up to dim line)
+    ctx.strokeStyle = extColor;
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(imgX + 0.5, imgY);       ctx.lineTo(imgX + 0.5, topY - tickLen - 2);
+    ctx.moveTo(imgX + srcW + 0.5, imgY); ctx.lineTo(imgX + srcW + 0.5, topY - tickLen - 2);
+    ctx.stroke();
+
+    // Main dimension line
+    ctx.strokeStyle = dimColor;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(imgX, topY);
+    ctx.lineTo(imgX + srcW, topY);
+    ctx.stroke();
+
+    // Arrows / ticks
+    drawArrowEnd(ctx, imgX, topY, 'left', dimColor);
+    drawArrowEnd(ctx, imgX + srcW, topY, 'right', dimColor);
+
+    // Width label
+    ctx.fillStyle = dimColor;
+    ctx.font = `500 11px ${monoFont}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(widthCm.toFixed(1) + ' cm', imgX + srcW / 2, topY - 4);
+
+    // =====================================================
+    //  5. LEFT DIMENSION LINE (height)
+    // =====================================================
+    const leftX = imgX - 22;
+
+    // Extension lines
+    ctx.strokeStyle = extColor;
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(imgX, imgY + 0.5);        ctx.lineTo(leftX - tickLen - 2, imgY + 0.5);
+    ctx.moveTo(imgX, imgY + srcH + 0.5); ctx.lineTo(leftX - tickLen - 2, imgY + srcH + 0.5);
+    ctx.stroke();
+
+    // Main dimension line
+    ctx.strokeStyle = dimColor;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(leftX, imgY);
+    ctx.lineTo(leftX, imgY + srcH);
+    ctx.stroke();
+
+    // Arrows
+    drawArrowEnd(ctx, leftX, imgY, 'up', dimColor);
+    drawArrowEnd(ctx, leftX, imgY + srcH, 'down', dimColor);
+
+    // Height label (rotated)
+    ctx.save();
+    ctx.translate(leftX - 8, imgY + srcH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = dimColor;
+    ctx.font = `500 11px ${monoFont}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(heightCm.toFixed(1) + ' cm', 0, 0);
+    ctx.restore();
+
+    // =====================================================
+    //  6. TITLE / SIDE NAME (top-left corner)
+    // =====================================================
+    // Color swatch
+    ctx.fillStyle = color;
+    ctx.fillRect(imgX, 12, 12, 12);
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(imgX, 12, 12, 12);
+
+    // Side name
+    ctx.fillStyle = textColor;
+    ctx.font = `600 12px ${monoFont}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(side.toUpperCase(), imgX + 18, 18);
+
+    // Subtle sub-info next to title
+    ctx.fillStyle = faintColor;
+    ctx.font = `400 10px ${monoFont}`;
+    ctx.fillText(`${widthCm.toFixed(1)}×${heightCm.toFixed(1)} cm  ·  ${pxPerCm} px/cm`, imgX + 18 + ctx.measureText(side.toUpperCase() + '   ').width - 10, 18);
+
+    // =====================================================
+    //  7. INFO BAR (bottom)
+    // =====================================================
+    const solidArea = (solidPixels / (pxPerCm * pxPerCm)).toFixed(1);
+    const totalArea = (widthCm * heightCm).toFixed(1);
+    const pctSolid  = ((solidPixels / Math.max(totalPixels, 1)) * 100).toFixed(1);
+
+    const infoY = imgY + srcH + 22;
+
+    // Left info
+    ctx.fillStyle = faintColor;
+    ctx.font = `400 10px ${monoFont}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(`■ Solid: ${solidArea} cm²  (${pctSolid}%)`, imgX, infoY);
+
+    // Right info / warning
+    if (hasOverflow) {
+      ctx.fillStyle = warnColor;
+      ctx.font = `600 10px ${monoFont}`;
+      ctx.textAlign = 'right';
+      ctx.fillText('⚠ siluet mencapai tepi', imgX + srcW, infoY);
+
+      // Red dashed border on affected edges
+      ctx.strokeStyle = warnColor;
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([5, 3]);
+      if (edges.top)    { ctx.beginPath(); ctx.moveTo(imgX, imgY + 0.5); ctx.lineTo(imgX + srcW, imgY + 0.5); ctx.stroke(); }
+      if (edges.bottom) { ctx.beginPath(); ctx.moveTo(imgX, imgY + srcH + 0.5); ctx.lineTo(imgX + srcW, imgY + srcH + 0.5); ctx.stroke(); }
+      if (edges.left)   { ctx.beginPath(); ctx.moveTo(imgX + 0.5, imgY); ctx.lineTo(imgX + 0.5, imgY + srcH); ctx.stroke(); }
+      if (edges.right)  { ctx.beginPath(); ctx.moveTo(imgX + srcW + 0.5, imgY); ctx.lineTo(imgX + srcW + 0.5, imgY + srcH); ctx.stroke(); }
+      ctx.setLineDash([]);
+    } else {
+      ctx.fillStyle = faintColor;
+      ctx.font = `400 10px ${monoFont}`;
+      ctx.textAlign = 'right';
+      ctx.fillText(`Total: ${totalArea} cm²`, imgX + srcW, infoY);
+    }
+
+    return c;
+  }
+
+  // Draw a small arrow/tick at end of dimension line
+  function drawArrowEnd(ctx, x, y, dir, color) {
+    const len = 5;
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    switch (dir) {
+      case 'left':
+        ctx.moveTo(x, y); ctx.lineTo(x + len, y - 2.5); ctx.lineTo(x + len, y + 2.5); break;
+      case 'right':
+        ctx.moveTo(x, y); ctx.lineTo(x - len, y - 2.5); ctx.lineTo(x - len, y + 2.5); break;
+      case 'up':
+        ctx.moveTo(x, y); ctx.lineTo(x - 2.5, y + len); ctx.lineTo(x + 2.5, y + len); break;
+      case 'down':
+        ctx.moveTo(x, y); ctx.lineTo(x - 2.5, y - len); ctx.lineTo(x + 2.5, y - len); break;
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // ================================================================
+  //  Render preview ke DOM — menyisipkan <canvas> per panel
+  // ================================================================
+  function renderPolaPreview(panels, showLabels) {
+    const area = document.getElementById('polaPreviewArea');
+    area.innerHTML = `<div class="preview-grid">${panels.map((p, i) => `
+      <div class="side-card">
+        <div class="side-head">
+          <div class="side-name">
+            <span class="swatch" style="background:${p.color}"></span>
+            ${p.side.toUpperCase()}
+          </div>
+          <div class="side-meta">
+            ${p.widthCm.toFixed(1)} × ${p.heightCm.toFixed(1)} cm<br/>
+            ${p.solidPixels.toLocaleString()} px solid${p.hasOverflow ? ' · <span class="warn">cek batas tepi</span>' : ''}
+          </div>
+        </div>
+        <div class="paper-stage" id="paperStage${i}"></div>
+      </div>
+    `).join('')}</div>`;
+
+    // Sisipkan canvas ke setiap paper-stage
+    panels.forEach((p, i) => {
+      const stage = document.getElementById('paperStage' + i);
+      const framedCanvas = createFramedCanvas(p, showLabels);
+      framedCanvases[p.side] = framedCanvas;
+      stage.appendChild(framedCanvas);
+    });
+  }
+
+  // ---------- Pipeline Render Utama ----------
+  function renderSemua() {
+    if (!loadedImage) return;
+    const Z = parseFloat(document.getElementById('dimZ').value);
+    const X = parseFloat(document.getElementById('dimX').value);
+    const Y = parseFloat(document.getElementById('dimY').value);
+    const pxPerCm = parseInt(document.getElementById('renderRes').value, 10);
+    const flipX = document.getElementById('flipX').checked;
+    const flipY = document.getElementById('flipY').checked;
+    const showLabels = document.getElementById('showLabels').checked;
+
+    if ([Z,X,Y].some(v => isNaN(v)) || Z<=0 || X<=0 || Y<=0) {
+      showToast('Periksa kembali dimensi Z, X, Y', true); return;
+    }
+
+    const { bin, w, h, imgData } = buildBinary();
+    tampilkanPratinjauBiner(w, h, bin, imgData);
+
+    const scale = 80 / w;
+    const cx0 = w / 2, cy0 = h / 2;
+    renderedCanvases = {};
+    renderedPanelData = [];
+    framedCanvases = {};
+
+    let totalSolidPixels = 0;
+
+    sisiList.forEach(side => {
+      const panelWidthCm  = (side === 'Atas' || side === 'Bawah') ? X : Y;
+      const panelHeightCm = Z;
+
+      const pxW = Math.round(panelWidthCm * pxPerCm);
+      const pxH = Math.round(panelHeightCm * pxPerCm);
+
+      const c = document.createElement('canvas');
+      c.width = pxW; c.height = pxH;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, pxW, pxH);
+
+      const outData = ctx.getImageData(0, 0, pxW, pxH);
+      const px = outData.data;
+      const r = 20, gCol = 23, b = 28;
+      let solidCount = 0;
+
+      for (let py = 0; py < pxH; py++) {
+        for (let pxCoord = 0; pxCoord < pxW; pxCoord++) {
+          const gFisik = (pxCoord / pxPerCm) - (panelWidthCm / 2);
+          const zFisik = Z - (py / pxPerCm);
+          const inv = inverseProyeksi(side, Z, X, Y, zFisik, gFisik);
+
+          if (inv) {
+            let tX = inv.tX, tY = inv.tY;
+            if (flipX) tX *= -1;
+            if (flipY) tY *= -1;
+
+            const sx = Math.round((tX / scale) + cx0);
+            const sy = Math.round(cy0 - (tY / scale));
+
+            if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
+              if (bin[sy * w + sx] === 1) {
+                const idxOut = (py * pxW + pxCoord) * 4;
+                px[idxOut] = r; px[idxOut+1] = gCol; px[idxOut+2] = b;
+                solidCount++;
+              }
+            }
+          }
+        }
+      }
+
+      ctx.putImageData(outData, 0, 0);
+      renderedCanvases[side] = { canvas: c, wCm: panelWidthCm, hCm: panelHeightCm };
+      totalSolidPixels += solidCount;
+
+      const edges = checkEdgeHits(c);
+      const hasOverflow = edges.top || edges.bottom || edges.left || edges.right;
+
+      renderedPanelData.push({
+        canvas: c, side,
+        widthCm: panelWidthCm, heightCm: panelHeightCm,
+        color: sisiColor[side],
+        solidPixels: solidCount,
+        totalPixels: pxW * pxH,
+        pxPerCm, hasOverflow, edges
+      });
+    });
+
+    renderPolaPreview(renderedPanelData, showLabels);
+
+    document.getElementById('metaInfo').innerHTML =
+      `Render selesai pada <b>${pxPerCm} px/cm</b>.<br/>Total area solid: <b>~${(totalSolidPixels / (pxPerCm*pxPerCm)).toFixed(2)} cm²</b>`;
+    document.getElementById('btnPng').disabled = false;
+    document.getElementById('btnPngFramed').disabled = false;
+    showToast('Siluet berhasil dirender');
+  }
+
+  function tampilkanPratinjauBiner(w, h, bin, imgDataOut) {
+    const card = document.getElementById('previewCard');
+    card.style.display = '';
+    document.getElementById('emptyPreview').style.display = 'none';
+    document.getElementById('previewMeta').textContent = `Mask Internal (${w}×${h}px)`;
+
+    const canvas = document.getElementById('viewCanvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    const d = imgDataOut.data;
+    for (let i = 0; i < bin.length; i++) {
+      const v = bin[i] === 1 ? 20 : 255;
+      d[i*4] = v; d[i*4+1] = v; d[i*4+2] = v; d[i*4+3] = 255;
+    }
+    ctx.putImageData(imgDataOut, 0, 0);
+  }
+
+  // ---------- Ekspor ----------
+  function fileSafeName(side) { return side.toLowerCase(); }
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // Ekspor PNG polos (tanpa frame)
+  function exportPNG() {
+    if (Object.keys(renderedCanvases).length === 0) return;
+    sisiList.forEach((side, i) => {
+      const item = renderedCanvases[side];
+      if (!item) return;
+      item.canvas.toBlob(blob => {
+        setTimeout(() => downloadBlob(blob, `shadow-art-${fileSafeName(side)}.png`), i * 150);
+      }, 'image/png');
+    });
+    showToast('4 file PNG diunduh (tanpa frame)');
+  }
+
+  // Ekspor PNG + Frame — langsung dari canvas (tanpa konversi SVG!)
+  function exportPNGFramed() {
+    if (Object.keys(framedCanvases).length === 0) return;
+    sisiList.forEach((side, i) => {
+      const c = framedCanvases[side];
+      if (!c) return;
+      c.toBlob(blob => {
+        setTimeout(() => downloadBlob(blob, `shadow-art-framed-${fileSafeName(side)}.png`), i * 150);
+      }, 'image/png');
+    });
+    showToast('4 file PNG + Frame diunduh');
+  }
+</script>
+</body>
+</html>

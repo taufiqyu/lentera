@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shadow Art — Deteksi &amp; Cetak Pola</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:           #0b0d10;
+    --panel:        #14171c;
+    --panel-raised: #1a1e24;
+    --canvas:       #0e1114;
+    --line:         #262b33;
+    --line-bright:  #383f4a;
+    --ink:          #e6e9ed;
+    --ink-dim:      #8b929e;
+    --ink-faint:    #565d68;
+    --amber:        #ffb454;
+    --amber-dim:    #8a6a3a;
+    --red:          #ff7a7a;
+    --green:        #7ee787;
+    --atas:         #5ec8ff;
+    --bawah:        #ff7a7a;
+    --kanan:        #7ee787;
+    --kiri:         #c792ea;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0;
+    background:
+      radial-gradient(ellipse 1200px 600px at 50% -10%, #1a1d23 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--amber-dim); color:#fff; }
+
+  .wrap{ max-width:1320px; margin:0 auto; padding:28px 20px 80px; }
+
+  /* ---------- Header ---------- */
+  .head{
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+    margin-bottom:26px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; letter-spacing:.18em; color:var(--amber);
+    text-transform:uppercase; margin-bottom:8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber); }
+  .head h1{ margin:0; font-size:26px; font-weight:700; letter-spacing:-.01em; }
+  .head .sub{ color:var(--ink-dim); font-size:13.5px; margin-top:6px; max-width:640px; line-height:1.55; }
+  .btn-link{
+    display:inline-block;
+    margin-top:16px;
+    background:transparent;
+    color:var(--ink-dim);
+    text-decoration:none;
+    border:1px solid var(--line-bright);
+    border-radius:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:11.5px;
+    letter-spacing:.03em;
+    padding:9px 16px;
+    transition:all .15s ease;
+  }
+  .btn-link:hover{ border-color:var(--amber); color:var(--amber); }
+
+  /* ---------- Layout ---------- */
+  .layout{ display:grid; grid-template-columns:380px 1fr; gap:20px; align-items:start; }
+  @media (max-width: 960px){ .layout{ grid-template-columns:1fr; } }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:20px; position:relative; overflow:hidden;
+  }
+  .panel::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--amber-dim), transparent);
+  }
+  .panel-label{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.14em;
+    color:var(--ink-faint); text-transform:uppercase; margin-bottom:14px;
+  }
+
+  /* upload dropzone */
+  .dropzone{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    box-sizing:border-box;
+    border:1.5px dashed var(--line-bright);
+    border-radius:10px;
+    padding:32px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .dropzone:hover, .dropzone.drag{ border-color:var(--amber); background:rgba(255,180,84,0.04); }
+  .dropzone input{ display:none; }
+  .dropzone .icon{
+    flex-shrink:0;
+    width:38px; height:38px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%; background:var(--bg); border:1px solid var(--line-bright);
+    color:var(--ink-faint); transition:all .15s ease;
+  }
+  .dropzone:hover .icon, .dropzone.drag .icon{ border-color:var(--amber); color:var(--amber); }
+  .dropzone .icon svg{ width:17px; height:17px; }
+  .dropzone .main-text{
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--ink-dim); font-weight:500;
+  }
+  .dropzone .sub-text{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-faint); margin-top:5px;
+    max-width:260px;
+  }
+
+  /* file loaded card */
+  .file-card{
+    display:none;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--bg);
+  }
+  .file-card.show{ display:block; }
+  .file-thumb{
+    background:var(--canvas);
+    background-image:
+      linear-gradient(45deg, var(--line) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--line) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--line) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--line) 75%);
+    background-size:14px 14px;
+    background-position:0 0, 0 7px, 7px -7px, -7px 0px;
+    display:flex; align-items:center; justify-content:center;
+    padding:14px; min-height:120px;
+  }
+  .file-thumb img{ max-width:100%; max-height:160px; display:block; border-radius:3px; }
+  .file-info{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 14px; border-top:1px solid var(--line); background:var(--panel-raised);
+  }
+  .file-info .details{ min-width:0; }
+  .file-info .fname{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .file-info .fmeta{
+    font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--ink-faint); margin-top:3px;
+  }
+  .btn-change{
+    flex-shrink:0;
+    background:transparent; border:1px solid var(--line-bright); color:var(--ink-dim);
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.03em;
+    border-radius:6px; padding:7px 12px; cursor:pointer; text-transform:uppercase;
+    transition:all .15s ease;
+  }
+  .btn-change:hover{ border-color:var(--amber); color:var(--amber); }
+
+  .section-divider{ height:1px; background:var(--line); margin:18px 0; }
+
+  .field-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .field-grid.two{ grid-template-columns:1fr 1fr; }
+  .field label{
+    display:block; font-family:'JetBrains Mono', monospace; font-size:10px;
+    letter-spacing:.06em; color:var(--ink-faint); margin-bottom:6px; text-transform:uppercase;
+  }
+  .field label .unit{ color:var(--amber-dim); }
+  .field input[type=number]{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); font-family:'JetBrains Mono', monospace; font-size:13.5px; font-weight:500;
+    padding:9px 10px; transition:border-color .15s ease;
+  }
+  .field input[type=number]:focus{ outline:none; border-color:var(--amber); }
+  .field input[type=range]{ width:100%; accent-color:var(--amber); }
+  .field .range-val{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--amber); float:right; }
+
+  .toggle-row{
+    display:flex; align-items:center; gap:8px; margin-top:12px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-dim);
+  }
+  .toggle-row input{ accent-color:var(--amber); width:14px; height:14px; }
+
+  .btn-render{
+    width:100%; background:var(--amber); color:#1a1306; border:none; border-radius:6px;
+    font-family:'JetBrains Mono', monospace; font-weight:600; font-size:12.5px; letter-spacing:.04em;
+    padding:12px; cursor:pointer; margin-top:18px; text-transform:uppercase;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  .btn-render:hover:not(:disabled){ filter:brightness(1.08); }
+  .btn-render:active:not(:disabled){ transform:scale(.99); }
+  .btn-render:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .meta-line{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-faint);
+    margin-top:12px; line-height:1.65;
+  }
+  .meta-line b{ color:var(--ink-dim); font-weight:500; }
+  .meta-line .warn{ color:var(--red); }
+  .meta-line .ok{ color:var(--green); }
+
+  /* ---------- Export bar ---------- */
+  .export-bar{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .btn-export{
+    flex:1; min-width:140px; background:transparent; border:1px solid var(--line-bright); color:var(--ink);
+    font-family:'JetBrains Mono', monospace; font-weight:500; font-size:11.5px; letter-spacing:.03em;
+    padding:11px 14px; border-radius:6px; cursor:pointer; text-transform:uppercase; transition:all .15s ease;
+  }
+  .btn-export:hover:not(:disabled){ border-color:var(--amber); color:var(--amber); }
+  .btn-export:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ---------- Preview: outline stage ---------- */
+  .preview-empty{
+    border:1px dashed var(--line-bright); border-radius:10px; padding:70px 24px;
+    text-align:center; color:var(--ink-faint); font-family:'JetBrains Mono', monospace;
+    font-size:12.5px; line-height:1.7;
+  }
+  .stage-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    margin-bottom:16px;
+  }
+  .stage-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; border-bottom:1px solid var(--line); background:var(--panel-raised);
+  }
+  .stage-name{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.1em; font-weight:600;
+  }
+  .stage-meta{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-faint); }
+  .canvas-stage{
+    background:var(--canvas);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:20px 20px; background-position:center;
+    padding:16px; display:flex; align-items:center; justify-content:center; overflow:auto;
+  }
+  .canvas-stage canvas{ max-width:100%; height:auto; display:block; }
+  .legend-row{
+    display:flex; gap:16px; padding:10px 14px; border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-faint);
+  }
+  .legend-row .sw{ display:inline-block; width:7px; height:7px; border-radius:1px; margin-right:5px; }
+
+  /* ---------- Preview: pola cetak grid ---------- */
+  .preview-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; }
+  @media (max-width: 700px){ .preview-grid{ grid-template-columns:1fr; } }
+
+  .side-card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .side-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; border-bottom:1px solid var(--line); background:var(--panel-raised);
+  }
+  .side-name{
+    display:flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.1em; font-weight:600;
+  }
+  .side-name .swatch{ width:8px; height:8px; border-radius:2px; }
+  .side-meta{
+    font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--ink-faint);
+    text-align:right; line-height:1.5;
+  }
+  .side-meta .warn{ color:var(--red); }
+  .svg-stage{
+    background:var(--canvas);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:20px 20px; background-position:center;
+    padding:18px; display:flex; align-items:center; justify-content:center;
+  }
+  .svg-stage svg{ max-width:100%; height:auto; display:block; }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--panel-raised); border:1px solid var(--line-bright); color:var(--ink);
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; padding:11px 18px; border-radius:8px;
+    opacity:0; pointer-events:none; transition:all .25s ease; box-shadow:0 8px 24px rgba(0,0,0,0.4); z-index:50;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.warn{ border-color:#8a3a3a; color:#ff9a9a; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="head">
+      <div class="eyebrow"><span class="dot"></span>Deteksi &amp; Cetak Dalam Satu Langkah</div>
+      <h1>Shadow Art — Deteksi &amp; Cetak Pola</h1>
+      <div class="sub">Upload gambar hitam-putih persegi, atur parameter, langsung dapat pola potong siap ekspor per sisi — tanpa perlu salin-tempel koordinat manual.</div>
+      <a class="btn-link" href="manualinput.html" target="_blank">Input Kordinat Manual →</a>
+    </div>
+
+    <div class="layout">
+
+      <!-- Controls -->
+      <div class="panel">
+        <div class="panel-label">1 · Upload Gambar</div>
+
+        <label class="dropzone" id="dropzone">
+          <span class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 16V4M12 4l-4 4M12 4l4 4"/>
+              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+            </svg>
+          </span>
+          <div class="main-text">Tap untuk pilih gambar</div>
+          <div class="sub-text">atau seret file ke sini · PNG / JPG, latar persegi</div>
+          <input type="file" id="fileInput" accept="image/*" />
+        </label>
+
+        <div class="file-card" id="fileCard">
+          <div class="file-thumb"><img id="thumbImg" alt="pratinjau" /></div>
+          <div class="file-info">
+            <div class="details">
+              <div class="fname" id="fname"></div>
+              <div class="fmeta" id="fmeta"></div>
+            </div>
+            <button class="btn-change" onclick="document.getElementById('fileInput').click()">Ganti</button>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="panel-label">2 · Parameter Deteksi</div>
+        <div class="field">
+          <label>Ambang Hitam/Putih <span class="range-val" id="threshVal">128</span></label>
+          <input type="range" id="threshold" min="1" max="254" value="128" />
+          <div class="sub-text" style="margin-top:4px;">Piksel lebih gelap dari ini = dipertahankan (hitam)</div>
+        </div>
+        <label class="toggle-row">
+          <input type="checkbox" id="invertColor" />
+          Balik warna (jika latar hitam, objek putih)
+        </label>
+
+        <div class="section-divider"></div>
+
+        <div class="field">
+          <label>Jarak Antar Titik <span class="unit">cm</span> <span class="range-val" id="spacingVal">1.0</span></label>
+          <input type="range" id="pointSpacing" min="0.2" max="5" step="0.1" value="1.0" />
+        </div>
+        <label class="toggle-row">
+          <input type="checkbox" id="flipX" />
+          Balik sumbu X
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="flipY" />
+          Balik sumbu Y
+        </label>
+
+        <div class="section-divider"></div>
+
+        <div class="panel-label">3 · Dimensi Kotak</div>
+        <div class="field-grid">
+          <div class="field"><label>Z <span class="unit">cm</span></label><input type="number" id="dimZ" value="10" step="0.1" /></div>
+          <div class="field"><label>X <span class="unit">cm</span></label><input type="number" id="dimX" value="12" step="0.1" /></div>
+          <div class="field"><label>Y <span class="unit">cm</span></label><input type="number" id="dimY" value="16" step="0.1" /></div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="panel-label">4 · Opsi Cetak</div>
+        <div class="field-grid" style="grid-template-columns:1fr;">
+          <div class="field">
+            <label>Diameter Titik <span class="unit">mm</span></label>
+            <input type="number" id="holeDia" value="0.5" step="0.1" min="0.1" />
+          </div>
+        </div>
+        <label class="toggle-row">
+          <input type="checkbox" id="showLabels" />
+          Tampilkan label koordinat di tiap titik
+        </label>
+
+        <div class="meta-line" id="metaInfo">Belum ada gambar diproses.</div>
+
+        <button class="btn-render" id="btnProses" onclick="renderSemua()" disabled>⚙ Deteksi &amp; Render Pola</button>
+
+        <div class="export-bar">
+          <button class="btn-export" id="btnSvg" onclick="exportSVG()" disabled>↓ Unduh SVG (per sisi)</button>
+          <button class="btn-export" id="btnPng" onclick="exportPNG()" disabled>↓ Unduh PNG (per sisi)</button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div>
+        <div class="stage-card" id="previewCard" style="display:none;">
+          <div class="stage-head">
+            <div class="stage-name">PRATINJAU OUTLINE</div>
+            <div class="stage-meta" id="previewMeta"></div>
+          </div>
+          <div class="legend-row">
+            <span><span class="sw" style="background:#ffb454;"></span>garis luar</span>
+            <span><span class="sw" style="background:#5ec8ff;"></span>lubang (garis dalam)</span>
+          </div>
+          <div class="canvas-stage"><canvas id="viewCanvas"></canvas></div>
+        </div>
+
+        <div id="emptyPreview" class="preview-empty">
+          Belum ada hasil.<br/>Upload gambar lalu tekan <b style="color:var(--ink-dim)">Deteksi &amp; Render Pola</b>.
+        </div>
+
+        <div id="polaPreviewArea"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // ---------- State ----------
+  let loadedImage = null;
+  let workCanvas = document.createElement('canvas');
+  let workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+  const MAX_DIM = 900; // batas resolusi kerja demi performa
+  const sisiList = ['Atas', 'Bawah', 'Kanan', 'Kiri'];
+  const sisiColor = { Atas: '#5ec8ff', Bawah: '#ff7a7a', Kanan: '#7ee787', Kiri: '#c792ea' };
+  let lastPanels = null; // hasil render terakhir, dipakai saat export
+
+  function showToast(msg, warn=false){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (warn ? ' warn' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = 'toast'; }, 2600);
+  }
+
+  // ---------- UI wiring: upload ----------
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault(); dropzone.classList.remove('drag');
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById('threshold').addEventListener('input', e => {
+    document.getElementById('threshVal').textContent = e.target.value;
+  });
+  document.getElementById('pointSpacing').addEventListener('input', e => {
+    document.getElementById('spacingVal').textContent = parseFloat(e.target.value).toFixed(1);
+  });
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024*1024) return `${(bytes/1024).toFixed(1)} KB`;
+    return `${(bytes/(1024*1024)).toFixed(2)} MB`;
+  }
+
+  function loadFile(file) {
+    if (!file.type.startsWith('image/')) { showToast('File harus berupa gambar', true); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        loadedImage = img;
+        document.getElementById('btnProses').disabled = false;
+
+        document.getElementById('thumbImg').src = e.target.result;
+        document.getElementById('fname').textContent = file.name;
+        const persegi = img.naturalWidth === img.naturalHeight ? '' : ' · ⚠ bukan persegi';
+        document.getElementById('fmeta').textContent =
+          `${img.naturalWidth}×${img.naturalHeight}px · ${formatBytes(file.size)}${persegi}`;
+
+        document.getElementById('dropzone').style.display = 'none';
+        document.getElementById('fileCard').classList.add('show');
+
+        showToast('Gambar dimuat — atur parameter lalu tekan Render');
+      };
+      img.onerror = () => showToast('Gagal membaca gambar', true);
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- Image -> binary grid ----------
+  function buildBinary() {
+    const iw = loadedImage.naturalWidth, ih = loadedImage.naturalHeight;
+    let w = iw, h = ih;
+    if (Math.max(w, h) > MAX_DIM) {
+      const scale = MAX_DIM / Math.max(w, h);
+      w = Math.round(w * scale); h = Math.round(h * scale);
+    }
+    workCanvas.width = w; workCanvas.height = h;
+    workCtx.drawImage(loadedImage, 0, 0, w, h);
+    const imgData = workCtx.getImageData(0, 0, w, h);
+    const px = imgData.data;
+    const threshold = parseInt(document.getElementById('threshold').value, 10);
+    const invert = document.getElementById('invertColor').checked;
+
+    const bin = new Uint8Array(w * h);
+    for (let i = 0, p = 0; i < px.length; i += 4, p++) {
+      const lum = 0.299*px[i] + 0.587*px[i+1] + 0.114*px[i+2];
+      let isDark = lum < threshold;
+      if (invert) isDark = !isDark;
+      bin[p] = isDark ? 1 : 0;
+    }
+    return { bin, w, h };
+  }
+
+  // ---------- Connected components (flood fill, 8-connectivity) ----------
+  function findBlobs(bin, w, h, minArea) {
+    const labels = new Int32Array(w * h);
+    const blobs = [];
+    const stack = new Int32Array(w * h);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x;
+        if (bin[idx] !== 1 || labels[idx] !== 0) continue;
+
+        let sp = 0;
+        stack[sp++] = idx;
+        labels[idx] = 1;
+        const pts = [];
+
+        while (sp > 0) {
+          const cur = stack[--sp];
+          const cx = cur % w, cy = (cur / w) | 0;
+          pts.push(cur);
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nx = cx + dx, ny = cy + dy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+              const nidx = ny * w + nx;
+              if (bin[nidx] === 1 && labels[nidx] === 0) {
+                labels[nidx] = 1;
+                stack[sp++] = nidx;
+              }
+            }
+          }
+        }
+        if (pts.length >= minArea) {
+          let startIdx = pts[0], startY = (startIdx / w) | 0;
+          for (const p of pts) {
+            const py = (p / w) | 0;
+            if (py < startY || (py === startY && (p % w) < (startIdx % w))) { startIdx = p; startY = py; }
+          }
+          blobs.push({ startX: startIdx % w, startY: (startIdx / w) | 0, size: pts.length });
+        }
+      }
+    }
+    return blobs;
+  }
+
+  // ---------- Moore-Neighbor boundary tracing (generik) ----------
+  const DIRS = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+
+  function traceContourGeneric(isMember, w, h, startX, startY) {
+    const contour = [];
+    let cx = startX, cy = startY, dir = 6;
+    const first = { x: cx, y: cy };
+    let guard = 0;
+    const maxGuard = w * h * 4;
+
+    let hasNeighbor = false;
+    for (let i = 0; i < 8; i++) { if (isMember(cx+DIRS[i][0], cy+DIRS[i][1])) { hasNeighbor = true; break; } }
+    if (!hasNeighbor) return [{ x: cx, y: cy }];
+
+    do {
+      let found = false;
+      for (let i = 0; i < 8; i++) {
+        const ndir = (dir + i) % 8;
+        const nx = cx + DIRS[ndir][0], ny = cy + DIRS[ndir][1];
+        if (isMember(nx, ny)) {
+          contour.push({ x: cx, y: cy });
+          cx = nx; cy = ny;
+          dir = (ndir + 6) % 8;
+          found = true;
+          break;
+        }
+      }
+      if (!found) break;
+      guard++;
+      if (guard > maxGuard) break;
+    } while (!(cx === first.x && cy === first.y));
+    contour.push(first);
+    return contour;
+  }
+
+  // ---------- Deteksi lubang (background yang terkurung di dalam area hitam) ----------
+  function findHoles(bin, w, h, minArea) {
+    const outerBg = new Uint8Array(w * h);
+    const stack = new Int32Array(w * h * 2);
+    let sp = 0;
+    for (let x = 0; x < w; x++) {
+      [0, h-1].forEach(y => {
+        const idx = y*w+x;
+        if (bin[idx] === 0 && !outerBg[idx]) { outerBg[idx] = 1; stack[sp++] = idx; }
+      });
+    }
+    for (let y = 0; y < h; y++) {
+      [0, w-1].forEach(x => {
+        const idx = y*w+x;
+        if (bin[idx] === 0 && !outerBg[idx]) { outerBg[idx] = 1; stack[sp++] = idx; }
+      });
+    }
+    while (sp > 0) {
+      const cur = stack[--sp];
+      const cx = cur % w, cy = (cur / w) | 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = cx+dx, ny = cy+dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const nidx = ny*w+nx;
+          if (bin[nidx] === 0 && !outerBg[nidx]) { outerBg[nidx] = 1; stack[sp++] = nidx; }
+        }
+      }
+    }
+
+    const holeLabel = new Int32Array(w * h);
+    let nextId = 1;
+    const holes = [];
+    const stack2 = new Int32Array(w * h);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y*w+x;
+        if (bin[idx] !== 0 || outerBg[idx] || holeLabel[idx] !== 0) continue;
+
+        let sp2 = 0;
+        stack2[sp2++] = idx;
+        holeLabel[idx] = nextId;
+        const pts = [];
+        while (sp2 > 0) {
+          const cur = stack2[--sp2];
+          const cx = cur % w, cy = (cur / w) | 0;
+          pts.push(cur);
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nx = cx+dx, ny = cy+dy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+              const nidx = ny*w+nx;
+              if (bin[nidx] === 0 && !outerBg[nidx] && holeLabel[nidx] === 0) {
+                holeLabel[nidx] = nextId;
+                stack2[sp2++] = nidx;
+              }
+            }
+          }
+        }
+        if (pts.length >= minArea) {
+          let startIdx = pts[0], startY = (startIdx / w) | 0;
+          for (const p of pts) {
+            const py = (p / w) | 0;
+            if (py < startY || (py === startY && (p % w) < (startIdx % w))) { startIdx = p; startY = py; }
+          }
+          holes.push({ id: nextId, startX: startIdx % w, startY: (startIdx / w) | 0, size: pts.length });
+        }
+        nextId++;
+      }
+    }
+    return { holes, holeLabel };
+  }
+
+  // ---------- Decimation (jarak minimum antar titik, dalam piksel) ----------
+  function decimate(contour, minSpacingPx) {
+    if (contour.length === 0) return [];
+    const kept = [contour[0]];
+    let last = contour[0];
+    for (let i = 1; i < contour.length; i++) {
+      const p = contour[i];
+      const d = Math.hypot(p.x - last.x, p.y - last.y);
+      if (d >= minSpacingPx) { kept.push(p); last = p; }
+    }
+    return kept;
+  }
+
+  // ---------- Proyeksi (identik dengan Kalkulator Geometri) ----------
+  function proyeksikan(Z, lebarXraw, panjangYraw, tX, tY) {
+    if (tX === 0 && tY === 0) return null;
+    const dX = lebarXraw / 2, dY = panjangYraw / 2;
+    const absX = Math.abs(tX), absY = Math.abs(tY);
+
+    let sisi, zFrame, lebarFrame;
+    if (absX === 0) {
+      sisi = tY >= 0 ? "Atas" : "Bawah";
+      zFrame = Z - (dY / absY) * Z;
+      lebarFrame = 0;
+    } else if (absY === 0) {
+      sisi = tX >= 0 ? "Kanan" : "Kiri";
+      zFrame = Z - (dX / absX) * Z;
+      lebarFrame = 0;
+    } else if ((absX * dY) >= (absY * dX)) {
+      sisi = tX >= 0 ? "Kanan" : "Kiri";
+      zFrame = Z - (dX / absX) * Z;
+      lebarFrame = (dX / absX) * tY;
+    } else {
+      sisi = tY >= 0 ? "Atas" : "Bawah";
+      zFrame = Z - (dY / absY) * Z;
+      lebarFrame = (dY / absY) * tX;
+    }
+    if (sisi === "Bawah" || sisi === "Kanan") { lebarFrame *= -1; }
+    if (isNaN(zFrame) || zFrame < 0) return null;
+    return { sisi, z: zFrame, g: lebarFrame };
+  }
+
+  function panelWidth(side, X, Y) {
+    return (side === 'Atas' || side === 'Bawah') ? X : Y;
+  }
+
+  // ---------- Pipeline utama: deteksi + proyeksi + render pola, sekali jalan ----------
+  function renderSemua() {
+    if (!loadedImage) return;
+    const Z = parseFloat(document.getElementById('dimZ').value);
+    const X = parseFloat(document.getElementById('dimX').value);
+    const Y = parseFloat(document.getElementById('dimY').value);
+    if ([Z,X,Y].some(v => isNaN(v)) || Z<=0 || X<=0 || Y<=0) {
+      showToast('Periksa kembali dimensi Z, X, Y', true); return;
+    }
+
+    const { bin, w, h } = buildBinary();
+    if (w !== h) showToast('Gambar tidak persegi — hasil bisa terdistorsi', true);
+
+    const minArea = Math.max(8, Math.round(w * h * 0.0005));
+    const blobs = findBlobs(bin, w, h, minArea);
+    if (!blobs.length) { showToast('Tidak ditemukan area hitam yang cukup besar', true); return; }
+
+    const minHoleArea = Math.max(4, Math.round(w * h * 0.00008));
+    const { holes, holeLabel } = findHoles(bin, w, h, minHoleArea);
+
+    const scale = 80 / w;
+    const cx0 = w / 2, cy0 = h / 2;
+    const spacingCm = parseFloat(document.getElementById('pointSpacing').value);
+    const spacingPx = spacingCm / scale;
+    const flipX = document.getElementById('flipX').checked;
+    const flipY = document.getElementById('flipY').checked;
+
+    let outerPts = [], innerPts = [];
+    let rejects = 0;
+    const grouped = { Atas: [], Bawah: [], Kanan: [], Kiri: [] };
+
+    function isFgMember(x, y) { return x >= 0 && y >= 0 && x < w && y < h && bin[y*w+x] === 1; }
+
+    function prosesTitik(pt) {
+      let tX = (pt.x - cx0) * scale;
+      let tY = (cy0 - pt.y) * scale;
+      if (flipX) tX *= -1;
+      if (flipY) tY *= -1;
+      tX = Math.max(-40, Math.min(40, tX));
+      tY = Math.max(-40, Math.min(40, tY));
+
+      const r = proyeksikan(Z, X, Y, tX, tY);
+      if (!r) { rejects++; return; }
+      grouped[r.sisi].push({ z: r.z, g: r.g });
+    }
+
+    blobs.forEach(b => {
+      const contour = traceContourGeneric(isFgMember, w, h, b.startX, b.startY);
+      const thin = decimate(contour, spacingPx);
+      outerPts.push(...thin);
+      thin.forEach(prosesTitik);
+    });
+
+    holes.forEach(hl => {
+      const isHoleMember = (x, y) => x >= 0 && y >= 0 && x < w && y < h && holeLabel[y*w+x] === hl.id;
+      const contour = traceContourGeneric(isHoleMember, w, h, hl.startX, hl.startY);
+      const thin = decimate(contour, spacingPx);
+      innerPts.push(...thin);
+      thin.forEach(prosesTitik);
+    });
+
+    // Bangun panel siap cetak langsung dari titik hasil proyeksi (tanpa parsing teks)
+    const holeDiaCm = parseFloat(document.getElementById('holeDia').value) / 10;
+    const showLabels = document.getElementById('showLabels').checked;
+    let printWarn = 0;
+    const panels = sisiList.map(side => {
+      const width = panelWidth(side, X, Y);
+      const points = grouped[side].map(p => {
+        const xc = width / 2 + p.g;
+        const yFromTop = Z - p.z;
+        const overflow = (xc - holeDiaCm/2 < 0) || (xc + holeDiaCm/2 > width) || (p.z < 0) || (p.z > Z);
+        if (overflow) printWarn++;
+        return { ...p, xc, yFromTop, overflow };
+      });
+      return { side, width, height: Z, points, color: sisiColor[side] };
+    });
+
+    lastPanels = { panels, holeDiaCm, showLabels, Z, X, Y };
+
+    gambarPratinjauOutline(bin, w, h, outerPts, innerPts);
+    renderPolaPreview(lastPanels);
+
+    const totalTitik = Object.values(grouped).reduce((n,a)=>n+a.length,0);
+    document.getElementById('metaInfo').innerHTML =
+      `<b>${blobs.length}</b> area luar · <b>${holes.length}</b> lubang · <b>${totalTitik}</b> titik` +
+      (rejects ? `<br/><span class="warn">⚠ ${rejects} titik dilewati (proyeksi melesat)</span>` : '') +
+      (printWarn ? `<br/><span class="warn">⚠ ${printWarn} titik di luar batas panel</span>` : `<br/><span class="ok">✓ semua titik valid & dalam batas panel</span>`);
+
+    document.getElementById('btnSvg').disabled = false;
+    document.getElementById('btnPng').disabled = false;
+    showToast(`Pola dirender — ${totalTitik} titik`);
+  }
+
+  // ---------- Pratinjau 1: outline hasil deteksi (canvas biner + overlay titik) ----------
+  function gambarPratinjauOutline(bin, w, h, outerPts, innerPts) {
+    const card = document.getElementById('previewCard');
+    card.style.display = '';
+    document.getElementById('emptyPreview').style.display = 'none';
+    document.getElementById('previewMeta').textContent = `${w}×${h}px · ${outerPts.length} luar / ${innerPts.length} dalam`;
+
+    const canvas = document.getElementById('viewCanvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(w, h);
+    for (let i = 0; i < bin.length; i++) {
+      const v = bin[i] === 1 ? 30 : 235;
+      imgData.data[i*4] = v; imgData.data[i*4+1] = v; imgData.data[i*4+2] = v; imgData.data[i*4+3] = 255;
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    ctx.fillStyle = '#ffb454';
+    outerPts.forEach(p => { ctx.fillRect(p.x-1, p.y-1, 2, 2); });
+    ctx.fillStyle = '#5ec8ff';
+    innerPts.forEach(p => { ctx.fillRect(p.x-1, p.y-1, 2, 2); });
+
+    ctx.strokeStyle = 'rgba(255,180,84,0.4)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
+  }
+
+  // ---------- Pratinjau 2: pola cetak per sisi (SVG) ----------
+  function renderPolaPreview({ panels, holeDiaCm, showLabels }) {
+    const area = document.getElementById('polaPreviewArea');
+    area.innerHTML = `<div class="preview-grid">${panels.map(p => `
+      <div class="side-card">
+        <div class="side-head">
+          <div class="side-name">
+            <span class="swatch" style="background:${p.color}"></span>
+            ${p.side.toUpperCase()}
+          </div>
+          <div class="side-meta">
+            ${p.width.toFixed(1)} × ${p.height.toFixed(1)} cm<br/>
+            ${p.points.length} titik${p.points.some(pt=>pt.overflow) ? ' · <span class="warn">cek batas</span>' : ''}
+          </div>
+        </div>
+        <div class="svg-stage">${panelPreviewSVG(p, holeDiaCm, showLabels)}</div>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  // Markup SVG bagian dalam (tanpa wrapper <svg>) untuk satu panel.
+  // mode.screen = true -> tema gelap untuk pratinjau layar
+  // mode.screen = false -> tema terang untuk ekspor cetak
+  function panelInnerSVG(p, holeDiaCm, showLabels, mode) {
+    const pad = 0.6;
+    const vbW = p.width + pad*2;
+    const vbH = p.height + pad*2;
+    const stroke = mode.screen ? '#383f4a' : '#000000';
+    const bg = mode.screen ? 'none' : '#ffffff';
+    const holeFill = mode.screen ? p.color : '#ffffff';
+    const holeStroke = mode.screen ? p.color : '#000000';
+    const overflowColor = '#ff3b3b';
+    const labelColor = mode.screen ? '#8b929e' : '#444444';
+    const centerColor = mode.screen ? '#383f4a' : '#999999';
+    const fontSize = Math.max(vbW, vbH) * 0.022;
+
+    let inner = '';
+    if (bg !== 'none') inner += `<rect x="0" y="0" width="${vbW}" height="${vbH}" fill="${bg}"/>`;
+    inner += `<rect x="${pad}" y="${pad}" width="${p.width}" height="${p.height}" fill="none" stroke="${stroke}" stroke-width="0.04"/>`;
+    inner += `<line x1="${pad + p.width/2}" y1="${pad}" x2="${pad + p.width/2}" y2="${pad + p.height}" stroke="${centerColor}" stroke-width="0.025" stroke-dasharray="0.15,0.15"/>`;
+    p.points.forEach(pt => {
+      const cx = pad + pt.xc;
+      const cy = pad + pt.yFromTop;
+      const r = holeDiaCm / 2;
+      const col = pt.overflow ? overflowColor : holeStroke;
+      inner += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${pt.overflow ? 'none' : holeFill}" stroke="${col}" stroke-width="0.035"/>`;
+      if (showLabels) {
+        inner += `<text x="${cx + r + 0.12}" y="${cy + fontSize*0.32}" font-family="JetBrains Mono, monospace" font-size="${fontSize}" fill="${labelColor}">${pt.z.toFixed(2)},${pt.g.toFixed(2)}</text>`;
+      }
+    });
+    if (!mode.screen) {
+      inner += `<text x="${pad}" y="${pad - 0.18}" font-family="JetBrains Mono, monospace" font-size="${fontSize*1.1}" fill="#000000" font-weight="600">${p.side.toUpperCase()} — ${p.width.toFixed(1)}×${p.height.toFixed(1)}cm</text>`;
+    }
+    return { inner, vbW, vbH };
+  }
+
+  function panelPreviewSVG(p, holeDiaCm, showLabels) {
+    const { inner, vbW, vbH } = panelInnerSVG(p, holeDiaCm, showLabels, { screen:true });
+    return `<svg viewBox="0 0 ${vbW} ${vbH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+  }
+
+  function buildPanelExportMarkup(p, holeDiaCm, showLabels) {
+    const titleSpace = 0.9;
+    const { inner, vbW, vbH } = panelInnerSVG(p, holeDiaCm, showLabels, { screen:false });
+    const totalW = vbW;
+    const totalH = vbH + titleSpace;
+    const body = `<rect x="0" y="0" width="${totalW}" height="${totalH}" fill="#ffffff"/>` +
+                 `<g transform="translate(0, ${titleSpace})">${inner}</g>`;
+    return { body, totalW, totalH };
+  }
+
+  function fileSafeName(side) { return side.toLowerCase(); }
+
+  function exportSVG() {
+    if (!lastPanels) return;
+    const { panels, holeDiaCm, showLabels } = lastPanels;
+    const withData = panels.filter(p => p.points.length > 0);
+    if (!withData.length) { showToast('Tidak ada sisi dengan titik untuk diekspor', true); return; }
+
+    withData.forEach((p, i) => {
+      const { body, totalW, totalH } = buildPanelExportMarkup(p, holeDiaCm, showLabels);
+      const widthMM = (totalW * 10).toFixed(1);
+      const heightMM = (totalH * 10).toFixed(1);
+      const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${widthMM}mm" height="${heightMM}mm" viewBox="0 0 ${totalW} ${totalH}">${body}</svg>`;
+      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      setTimeout(() => downloadBlob(blob, `shadow-art-${fileSafeName(p.side)}.svg`), i * 150);
+    });
+    showToast(`${withData.length} file SVG diunduh — skala 1:1`);
+  }
+
+  async function exportPNG() {
+    if (!lastPanels) return;
+    const { panels, holeDiaCm, showLabels } = lastPanels;
+    const withData = panels.filter(p => p.points.length > 0);
+    if (!withData.length) { showToast('Tidak ada sisi dengan titik untuk diekspor', true); return; }
+
+    const pxPerCm = 38;
+
+    for (let i = 0; i < withData.length; i++) {
+      const p = withData[i];
+      const { body, totalW, totalH } = buildPanelExportMarkup(p, holeDiaCm, showLabels);
+      const pxW = Math.round(totalW * pxPerCm);
+      const pxH = Math.round(totalH * pxPerCm);
+      const svgForRaster = `<svg xmlns="http://www.w3.org/2000/svg" width="${pxW}" height="${pxH}" viewBox="0 0 ${totalW} ${totalH}">${body}</svg>`;
+
+      await new Promise((resolve) => {
+        const blob = new Blob([svgForRaster], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = pxW; canvas.height = pxH;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, pxW, pxH);
+          ctx.drawImage(img, 0, 0, pxW, pxH);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(pngBlob => {
+            downloadBlob(pngBlob, `shadow-art-${fileSafeName(p.side)}.png`);
+            resolve();
+          }, 'image/png');
+        };
+        img.onerror = () => resolve();
+        img.src = url;
+      });
+    }
+    showToast(`${withData.length} file PNG diunduh`);
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+</script>
+</body>
+</html>
