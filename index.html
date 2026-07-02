@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Shadow Art Proyektor</title>
+<title>Shadow Art — Deteksi Kordinat</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -11,6 +11,7 @@
     --bg:           #0b0d10;
     --panel:        #14171c;
     --panel-raised: #1a1e24;
+    --canvas:       #0e1114;
     --line:         #262b33;
     --line-bright:  #383f4a;
     --ink:          #e6e9ed;
@@ -18,8 +19,10 @@
     --ink-faint:    #565d68;
     --amber:        #ffb454;
     --amber-dim:    #8a6a3a;
-    --atas:        #5ec8ff;
-    --bawah:     #ff7a7a;
+    --red:          #ff7a7a;
+    --green:        #7ee787;
+    --atas:         #5ec8ff;
+    --bawah:        #ff7a7a;
     --kanan:        #7ee787;
     --kiri:         #c792ea;
   }
@@ -36,320 +39,237 @@
   }
   ::selection{ background:var(--amber-dim); color:#fff; }
 
-  .mono{ font-family:'JetBrains Mono', monospace; }
-
-  .wrap{
-    max-width:1280px;
-    margin:0 auto;
-    padding:28px 20px 80px;
-  }
+  .wrap{ max-width:1320px; margin:0 auto; padding:28px 20px 80px; }
 
   /* ---------- Header ---------- */
   .head{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-end;
-    flex-wrap:wrap;
-    gap:16px;
     border-bottom:1px solid var(--line);
     padding-bottom:20px;
-    margin-bottom:28px;
+    margin-bottom:26px;
   }
-  .head-left .eyebrow{
+  .eyebrow{
     font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    letter-spacing:.18em;
-    color:var(--amber);
-    text-transform:uppercase;
-    margin-bottom:8px;
-    display:flex;
-    align-items:center;
-    gap:8px;
+    font-size:11px; letter-spacing:.18em; color:var(--amber);
+    text-transform:uppercase; margin-bottom:8px;
+    display:flex; align-items:center; gap:8px;
   }
-  .eyebrow .dot{
-    width:6px; height:6px; border-radius:50%;
-    background:var(--amber);
-    box-shadow:0 0 8px var(--amber);
-  }
-  .head-left h1{
-    margin:0;
-    font-size:28px;
-    font-weight:700;
-    letter-spacing:-.01em;
-  }
-  .head-left .sub{
-    color:var(--ink-dim);
-    font-size:13.5px;
-    margin-top:6px;
-    max-width:520px;
-    line-height:1.5;
-  }
-  .head-right{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11.5px;
-    color:var(--ink-faint);
-    text-align:right;
-    line-height:1.7;
-  }
-  .head-right b{ color:var(--ink-dim); font-weight:500; }
-
-  /* ---------- Input console ---------- */
-  .console{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:22px 22px 18px;
-    margin-bottom:30px;
-    position:relative;
-    overflow:hidden;
-  }
-  .console::before{
-    content:'';
-    position:absolute; top:0; left:0; right:0; height:1px;
-    background:linear-gradient(90deg, transparent, var(--amber-dim), transparent);
-  }
-  .console-label{
-    font-family:'JetBrains Mono', monospace;
-    font-size:10.5px;
-    letter-spacing:.14em;
-    color:var(--ink-faint);
-    text-transform:uppercase;
-    margin-bottom:16px;
-  }
-
-  .field-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:14px 16px;
-    margin-bottom:8px;
-  }
-  .field-group{
-    grid-column: span 3;
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:14px;
-  }
-  .field-group-z{
-    grid-template-columns: minmax(140px, 220px);
-  }
-  .field-divider{
-    grid-column: span 3;
-    height:1px;
-    background:var(--line);
-    margin:2px 0 4px;
-  }
-
-  .field{ position:relative; }
-  .field label{
-    display:block;
-    font-family:'JetBrains Mono', monospace;
-    font-size:10.5px;
-    letter-spacing:.06em;
-    color:var(--ink-faint);
-    margin-bottom:7px;
-    text-transform:uppercase;
-  }
-  .field label .unit{ color:var(--amber-dim); }
-  .field input{
-    width:100%;
-    background:var(--bg);
-    border:1px solid var(--line);
-    border-radius:6px;
-    color:var(--ink);
-    font-family:'JetBrains Mono', monospace;
-    font-size:15px;
-    font-weight:500;
-    padding:11px 12px;
-    transition:border-color .15s ease, background .15s ease;
-  }
-  .field input:hover{ border-color:var(--line-bright); }
-  .field input:focus{
-    outline:none;
-    border-color:var(--amber);
-    background:#191c20;
-  }
-  .field.target input{ color:var(--amber); }
-
-  .btn-row{
-    display:flex;
-    justify-content:flex-end;
-    align-items:center;
-    gap:10px;
-    margin-top:14px;
-  }
-  .btn-copy-all{
-    background:transparent;
-    color:var(--ink-dim);
-    border:1px solid var(--line-bright);
-    border-radius:6px;
-    font-family:'JetBrains Mono', monospace;
-    font-weight:500;
-    font-size:11.5px;
-    letter-spacing:.03em;
-    padding:10px 16px;
-    cursor:pointer;
-    transition:all .15s ease;
-  }
-  .btn-copy-all:hover{ border-color:var(--amber-dim); color:var(--amber); }
-  .btn-copy-all.copied{ border-color:#7ee787; color:#7ee787; }
-  .btn-add{
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber); }
+  .head h1{ margin:0; font-size:26px; font-weight:700; letter-spacing:-.01em; }
+  .head .sub{ color:var(--ink-dim); font-size:13.5px; margin-top:6px; max-width:640px; line-height:1.55; }
+  .btn-link{
+    display:inline-block;
+    margin-top:16px;
     background:var(--amber);
     color:#1a1306;
-    border:none;
+    text-decoration:none;
     border-radius:6px;
     font-family:'JetBrains Mono', monospace;
     font-weight:600;
-    font-size:12.5px;
-    letter-spacing:.04em;
-    padding:11px 22px;
-    cursor:pointer;
+    font-size:12px;
+    letter-spacing:.03em;
+    padding:10px 18px;
     transition:filter .15s ease, transform .1s ease;
-    text-transform:uppercase;
-    text-decoration: none;
   }
-  .btn-add:hover{ filter:brightness(1.08); }
-  .btn-add:active{ transform:scale(.98); }
+  .btn-link:hover{ filter:brightness(1.08); }
+  .btn-link:active{ transform:scale(.98); }
 
-  /* ---------- Side panels ---------- */
-  .sides{
-    display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:16px;
+  /* ---------- Layout ---------- */
+  .layout{ display:grid; grid-template-columns:380px 1fr; gap:20px; align-items:start; }
+  @media (max-width: 960px){ .layout{ grid-template-columns:1fr; } }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:20px; position:relative; overflow:hidden;
   }
-  @media (max-width: 980px){
-    .sides{ grid-template-columns:repeat(2, 1fr); }
+  .panel::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--amber-dim), transparent);
   }
-  @media (max-width: 560px){
-    .sides{ grid-template-columns:1fr; }
-    .field-group, .field-grid{ grid-template-columns:repeat(2,1fr); }
-    .field-group .field:last-child{ grid-column: span 2; }
-    .btn-row{ flex-direction:column; align-items:stretch; }
+  .panel-label{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.14em;
+    color:var(--ink-faint); text-transform:uppercase; margin-bottom:14px;
   }
 
-  .side-card{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:10px;
-    overflow:hidden;
+  /* upload dropzone */
+  .dropzone{
     display:flex;
     flex-direction:column;
-  }
-  .side-head{
-    display:flex;
     align-items:center;
-    justify-content:space-between;
-    padding:13px 14px;
-    border-bottom:1px solid var(--line);
-    background:var(--panel-raised);
-  }
-  .side-name{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:11.5px;
-    letter-spacing:.1em;
-    font-weight:600;
-  }
-  .side-name .swatch{
-    width:8px; height:8px; border-radius:2px;
-  }
-  .side-count{
-    font-family:'JetBrains Mono', monospace;
-    font-size:10.5px;
-    color:var(--ink-faint);
-  }
-  .btn-copy{
-    background:transparent;
-    border:1px solid var(--line-bright);
-    color:var(--ink-dim);
-    font-family:'JetBrains Mono', monospace;
-    font-size:10px;
-    letter-spacing:.06em;
-    border-radius:5px;
-    padding:5px 9px;
-    cursor:pointer;
-    text-transform:uppercase;
-    transition:all .15s ease;
-  }
-  .btn-copy:hover{ border-color:var(--ink-dim); color:var(--ink); }
-  .btn-copy.copied{ border-color:#7ee787; color:#7ee787; }
-
-  table{ width:100%; border-collapse:collapse; }
-  thead th{
-    text-align:left;
-    font-family:'JetBrains Mono', monospace;
-    font-size:10px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:var(--ink-faint);
-    font-weight:500;
-    padding:9px 12px;
-    border-bottom:1px solid var(--line);
-  }
-  thead th:last-child{ width:30px; }
-  tbody td{
-    font-family:'JetBrains Mono', monospace;
-    font-size:13px;
-    padding:9px 12px;
-    border-bottom:1px solid var(--line);
-    color:var(--ink);
-  }
-  tbody tr:last-child td{ border-bottom:none; }
-  tbody tr:hover td{ background:rgba(255,255,255,0.02); }
-  tbody td:nth-child(2){ color:var(--ink-dim); }
-
-  .row-del{
-    background:transparent;
-    border:none;
-    color:var(--ink-faint);
-    cursor:pointer;
-    font-size:15px;
-    line-height:1;
-    padding:2px 5px;
-    border-radius:4px;
-    transition:all .15s ease;
-  }
-  .row-del:hover{ color:#ff7a7a; background:rgba(255,122,122,0.1); }
-
-  .empty-state{
-    padding:28px 14px;
+    justify-content:center;
+    width:100%;
+    box-sizing:border-box;
+    border:1.5px dashed var(--line-bright);
+    border-radius:10px;
+    padding:32px 16px;
     text-align:center;
-    color:var(--ink-faint);
-    font-family:'JetBrains Mono', monospace;
-    font-size:11.5px;
-    letter-spacing:.02em;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .dropzone:hover, .dropzone.drag{ border-color:var(--amber); background:rgba(255,180,84,0.04); }
+  .dropzone input{ display:none; }
+  .dropzone .icon{
+    flex-shrink:0;
+    width:38px; height:38px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%; background:var(--bg); border:1px solid var(--line-bright);
+    color:var(--ink-faint); transition:all .15s ease;
+  }
+  .dropzone:hover .icon, .dropzone.drag .icon{ border-color:var(--amber); color:var(--amber); }
+  .dropzone .icon svg{ width:17px; height:17px; }
+  .dropzone .main-text{
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--ink-dim); font-weight:500;
+  }
+  .dropzone .sub-text{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-faint); margin-top:5px;
+    max-width:260px;
   }
 
-  /* per-side accent bars */
-  .side-card[data-side="Atas"] .side-head{ border-bottom-color:#1f3848; }
-  .side-card[data-side="Bawah"] .side-head{ border-bottom-color:#3f2424; }
-  .side-card[data-side="Kanan"] .side-head{ border-bottom-color:#23391f; }
-  .side-card[data-side="Kiri"] .side-head{ border-bottom-color:#332540; }
+  /* file loaded card */
+  .file-card{
+    display:none;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--bg);
+  }
+  .file-card.show{ display:block; }
+  .file-thumb{
+    background:var(--canvas);
+    background-image:
+      linear-gradient(45deg, var(--line) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--line) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--line) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--line) 75%);
+    background-size:14px 14px;
+    background-position:0 0, 0 7px, 7px -7px, -7px 0px;
+    display:flex; align-items:center; justify-content:center;
+    padding:14px; min-height:120px;
+  }
+  .file-thumb img{ max-width:100%; max-height:160px; display:block; border-radius:3px; }
+  .file-info{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 14px; border-top:1px solid var(--line); background:var(--panel-raised);
+  }
+  .file-info .details{ min-width:0; }
+  .file-info .fname{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .file-info .fmeta{
+    font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--ink-faint); margin-top:3px;
+  }
+  .btn-change{
+    flex-shrink:0;
+    background:transparent; border:1px solid var(--line-bright); color:var(--ink-dim);
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.03em;
+    border-radius:6px; padding:7px 12px; cursor:pointer; text-transform:uppercase;
+    transition:all .15s ease;
+  }
+  .btn-change:hover{ border-color:var(--amber); color:var(--amber); }
 
-  /* toast */
+  .section-divider{ height:1px; background:var(--line); margin:18px 0; }
+
+  .field-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .field-grid.two{ grid-template-columns:1fr 1fr; }
+  .field label{
+    display:block; font-family:'JetBrains Mono', monospace; font-size:10px;
+    letter-spacing:.06em; color:var(--ink-faint); margin-bottom:6px; text-transform:uppercase;
+  }
+  .field label .unit{ color:var(--amber-dim); }
+  .field input[type=number]{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); font-family:'JetBrains Mono', monospace; font-size:13.5px; font-weight:500;
+    padding:9px 10px; transition:border-color .15s ease;
+  }
+  .field input[type=number]:focus{ outline:none; border-color:var(--amber); }
+  .field input[type=range]{ width:100%; accent-color:var(--amber); }
+  .field .range-val{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--amber); float:right; }
+
+  .toggle-row{
+    display:flex; align-items:center; gap:8px; margin-top:12px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-dim);
+  }
+  .toggle-row input{ accent-color:var(--amber); width:14px; height:14px; }
+
+  .btn-render{
+    width:100%; background:var(--amber); color:#1a1306; border:none; border-radius:6px;
+    font-family:'JetBrains Mono', monospace; font-weight:600; font-size:12.5px; letter-spacing:.04em;
+    padding:12px; cursor:pointer; margin-top:18px; text-transform:uppercase;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  .btn-render:hover:not(:disabled){ filter:brightness(1.08); }
+  .btn-render:active:not(:disabled){ transform:scale(.99); }
+  .btn-render:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .meta-line{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-faint);
+    margin-top:12px; line-height:1.65;
+  }
+  .meta-line b{ color:var(--ink-dim); font-weight:500; }
+  .meta-line .warn{ color:var(--red); }
+  .meta-line .ok{ color:var(--green); }
+
+  /* ---------- Preview ---------- */
+  .preview-empty{
+    border:1px dashed var(--line-bright); border-radius:10px; padding:70px 24px;
+    text-align:center; color:var(--ink-faint); font-family:'JetBrains Mono', monospace;
+    font-size:12.5px; line-height:1.7;
+  }
+  .stage-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    margin-bottom:16px;
+  }
+  .stage-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; border-bottom:1px solid var(--line); background:var(--panel-raised);
+  }
+  .stage-name{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.1em; font-weight:600;
+  }
+  .stage-meta{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-faint); }
+  .canvas-stage{
+    background:var(--canvas);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:20px 20px; background-position:center;
+    padding:16px; display:flex; align-items:center; justify-content:center; overflow:auto;
+  }
+  .canvas-stage canvas{ max-width:100%; height:auto; display:block; }
+
+  /* output text panel */
+  .output-wrap{ position:relative; }
+  textarea#outputText{
+    width:100%; min-height:220px; background:var(--bg); border:1px solid var(--line);
+    border-radius:8px; color:var(--ink); font-family:'JetBrains Mono', monospace; font-size:12px;
+    line-height:1.6; padding:12px; resize:vertical;
+  }
+  .output-actions{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  .btn-export{
+    flex:1; min-width:140px; background:transparent; border:1px solid var(--line-bright); color:var(--ink);
+    font-family:'JetBrains Mono', monospace; font-weight:500; font-size:11.5px; letter-spacing:.03em;
+    padding:11px 14px; border-radius:6px; cursor:pointer; text-transform:uppercase; transition:all .15s ease;
+  }
+  .btn-export:hover:not(:disabled){ border-color:var(--amber); color:var(--amber); }
+  .btn-export:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-export.copied{ border-color:var(--green); color:var(--green); }
+
+  .side-tally{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:14px;
+  }
+  @media (max-width:520px){ .side-tally{ grid-template-columns:repeat(2,1fr); } }
+  .tally-item{
+    background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .tally-item .sw{ display:inline-block; width:7px; height:7px; border-radius:2px; margin-right:6px; }
+  .tally-item .n{ font-size:10.5px; letter-spacing:.08em; color:var(--ink-dim); }
+  .tally-item .v{ font-size:16px; font-weight:600; margin-top:3px; }
+
   .toast{
-    position:fixed;
-    bottom:24px;
-    left:50%;
-    transform:translateX(-50%) translateY(20px);
-    background:var(--panel-raised);
-    border:1px solid var(--line-bright);
-    color:var(--ink);
-    font-family:'JetBrains Mono', monospace;
-    font-size:12.5px;
-    padding:11px 18px;
-    border-radius:8px;
-    opacity:0;
-    pointer-events:none;
-    transition:all .25s ease;
-    box-shadow:0 8px 24px rgba(0,0,0,0.4);
-    z-index:50;
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--panel-raised); border:1px solid var(--line-bright); color:var(--ink);
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; padding:11px 18px; border-radius:8px;
+    opacity:0; pointer-events:none; transition:all .25s ease; box-shadow:0 8px 24px rgba(0,0,0,0.4); z-index:50;
   }
-  .toast.show{
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
-  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .toast.warn{ border-color:#8a3a3a; color:#ff9a9a; }
 </style>
 </head>
@@ -357,117 +277,398 @@
   <div class="wrap">
 
     <div class="head">
-      <div class="head-left">
-        <div class="eyebrow"><span class="dot"></span>Kalkulator Geometri Proyeksi</div>
-        <h1>Shadow Art Proyektor</h1>
-        <div class="sub">Hitung posisi lubang pada empat sisi kotak untuk membentuk bayangan target saat disinari dari titik tengah atas.</div>
-      </div>
-      <div class="head-right">
-        DIMENSI KOTAK <b>X × Y × Z</b>
-      </div>
-      <a class="btn-add" href="polacetak.html" target="_blank">Cetak Pola</a>
+      <div class="eyebrow"><span class="dot"></span>Deteksi Outline Otomatis</div>
+      <h1>Shadow Art — Deteksi Kordinat</h1>
+      <div class="sub">Upload gambar hitam-putih persegi. Bagian hitam dipertahankan sebagai outline (termasuk lubang di dalamnya), dipetakan ke grid -40..40, lalu dikonversi otomatis lewat rumus proyeksi — hasilnya siap ditempel ke Generator Pola.</div>
+      <a class="btn-link" href="polacetak.html" target="_blank">Buka Generator Pola (Cetak)</a>
+      <a class="btn-link" href="manualinput.html" target="_blank">Input Kordinat Manual</a>
     </div>
 
-    <!-- Input console -->
-    <div class="console">
-      <div class="console-label">Parameter Input</div>
-      <div class="field-grid">
-        <div class="field-group field-group-z">
-          <div class="field">
-            <label>Tinggi <span class="unit">Z · cm</span></label>
-            <input type="number" id="tinggiZ" value="10" step="0.1" />
-          </div>
-        </div>
-        <div class="field-divider"></div>
-        <div class="field-group">
-          <div class="field">
-            <label>Lebar <span class="unit">X · cm</span></label>
-            <input type="number" id="lebarX" value="12" step="0.1" />
-          </div>
-          <div class="field">
-            <label>Panjang <span class="unit">Y · cm</span></label>
-            <input type="number" id="panjangY" value="16" step="0.1" />
-          </div>
-          <div class="field" aria-hidden="true"></div>
-        </div>
-        <div class="field-divider"></div>
-        <div class="field-group">
-          <div class="field target">
-            <label>Target <span class="unit">X · cm</span></label>
-            <input type="number" id="targetX" value="15" step="0.1" />
-          </div>
-          <div class="field target">
-            <label>Target <span class="unit">Y · cm</span></label>
-            <input type="number" id="targetY" value="8" step="0.1" />
-          </div>
-          <div class="field" aria-hidden="true"></div>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn-copy-all" id="btn-copy-all" onclick="salinSemua()">⧉ Salin Semua Koordinat</button>
-        <button class="btn-add" onclick="tambahData()">+ Tambah Titik</button>
-      </div>
-    </div>
+    <div class="layout">
 
-    <!-- Side panels -->
-    <div class="sides" id="sides-container"></div>
+      <!-- Controls -->
+      <div class="panel">
+        <div class="panel-label">1 · Upload Gambar</div>
+
+        <label class="dropzone" id="dropzone">
+          <span class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 16V4M12 4l-4 4M12 4l4 4"/>
+              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+            </svg>
+          </span>
+          <div class="main-text">Tap untuk pilih gambar</div>
+          <div class="sub-text">atau seret file ke sini · PNG / JPG, latar persegi</div>
+          <input type="file" id="fileInput" accept="image/*" />
+        </label>
+
+        <div class="file-card" id="fileCard">
+          <div class="file-thumb"><img id="thumbImg" alt="pratinjau" /></div>
+          <div class="file-info">
+            <div class="details">
+              <div class="fname" id="fname"></div>
+              <div class="fmeta" id="fmeta"></div>
+            </div>
+            <button class="btn-change" onclick="document.getElementById('fileInput').click()">Ganti</button>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="panel-label">2 · Parameter Deteksi</div>
+        <div class="field">
+          <label>Ambang Hitam/Putih <span class="range-val" id="threshVal">128</span></label>
+          <input type="range" id="threshold" min="1" max="254" value="128" />
+        </div>
+        <label class="toggle-row">
+          <input type="checkbox" id="invertColor" />
+          Balik warna (jika latar hitam, objek putih)
+        </label>
+
+        <div class="section-divider"></div>
+
+        <div class="field">
+          <label>Jarak Antar Titik <span class="unit">cm</span> <span class="range-val" id="spacingVal">1.0</span></label>
+          <input type="range" id="pointSpacing" min="0.2" max="5" step="0.1" value="1.0" />
+        </div>
+        <label class="toggle-row">
+          <input type="checkbox" id="flipX" />
+          Balik sumbu X
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="flipY" />
+          Balik sumbu Y
+        </label>
+
+        <div class="section-divider"></div>
+
+        <div class="panel-label">3 · Dimensi Kotak</div>
+        <div class="field-grid">
+          <div class="field"><label>Z <span class="unit">cm</span></label><input type="number" id="dimZ" value="10" step="0.1" /></div>
+          <div class="field"><label>X <span class="unit">cm</span></label><input type="number" id="dimX" value="12" step="0.1" /></div>
+          <div class="field"><label>Y <span class="unit">cm</span></label><input type="number" id="dimY" value="16" step="0.1" /></div>
+        </div>
+
+        <div class="meta-line" id="metaInfo">Belum ada gambar diproses.</div>
+
+        <button class="btn-render" id="btnProses" onclick="prosesGambar()" disabled>⚙ Deteksi &amp; Konversi</button>
+      </div>
+
+      <!-- Preview + Output -->
+      <div>
+        <div class="stage-card" id="previewCard" style="display:none;">
+          <div class="stage-head">
+            <div class="stage-name">PRATINJAU OUTLINE</div>
+            <div class="stage-meta" id="previewMeta"></div>
+          </div>
+          <div style="display:flex; gap:16px; padding:10px 14px; border-bottom:1px solid var(--line); font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-faint);">
+            <span><span style="display:inline-block;width:7px;height:7px;background:#ffb454;border-radius:1px;margin-right:5px;"></span>garis luar</span>
+            <span><span style="display:inline-block;width:7px;height:7px;background:#5ec8ff;border-radius:1px;margin-right:5px;"></span>lubang (garis dalam)</span>
+          </div>
+          <div class="canvas-stage"><canvas id="viewCanvas"></canvas></div>
+        </div>
+
+        <div id="emptyPreview" class="preview-empty">
+          Belum ada hasil.<br/>Upload gambar lalu tekan <b style="color:var(--ink-dim)">Deteksi &amp; Konversi</b>.
+        </div>
+
+        <div class="stage-card" id="outputCard" style="display:none;">
+          <div class="stage-head">
+            <div class="stage-name">HASIL KORDINAT</div>
+            <div class="stage-meta">Siap ditempel ke Generator Pola</div>
+          </div>
+          <div style="padding:16px;">
+            <div class="side-tally" id="sideTally"></div>
+            <div class="output-wrap" style="margin-top:16px;">
+              <textarea id="outputText" readonly></textarea>
+            </div>
+            <div class="output-actions">
+              <button class="btn-export" id="btnCopy" onclick="salinOutput()">⧉ Salin ke Clipboard</button>
+              <button class="btn-export" id="btnDownload" onclick="unduhOutput()">↓ Unduh .txt</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
 <script>
-  const sisiList = ['Atas', 'Bawah', 'Kanan', 'Kiri'];
-  const sisiColor = { Atas: 'var(--atas)', Bawah: 'var(--bawah)', Kanan: 'var(--kanan)', Kiri: 'var(--kiri)' };
-  let data = { Atas: [], Bawah: [], Kanan: [], Kiri: [] };
+  // ---------- State ----------
+  let loadedImage = null;
+  let workCanvas = document.createElement('canvas');
+  let workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+  const MAX_DIM = 900; // batas resolusi kerja demi performa
 
-  const container = document.getElementById('sides-container');
-  container.innerHTML = sisiList.map(s => `
-    <div class="side-card" data-side="${s}">
-      <div class="side-head">
-        <div class="side-name">
-          <span class="swatch" style="background:${sisiColor[s]}"></span>
-          ${s.toUpperCase()}
-        </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span class="side-count" id="count-${s}">0 titik</span>
-          <button class="btn-copy" id="copy-${s}" onclick="salinSisi('${s}')">Salin</button>
-        </div>
-      </div>
-      <table>
-        <thead><tr><th>Z (cm)</th><th>Geser (cm)</th><th></th></tr></thead>
-        <tbody id="body-${s}"></tbody>
-      </table>
-      <div class="empty-state" id="empty-${s}">Belum ada titik</div>
-    </div>
-  `).join('');
+  const sisiColor = { Atas: '#5ec8ff', Bawah: '#ff7a7a', Kanan: '#7ee787', Kiri: '#c792ea' };
 
   function showToast(msg, warn=false){
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.className = 'toast show' + (warn ? ' warn' : '');
     clearTimeout(t._timer);
-    t._timer = setTimeout(() => { t.className = 'toast'; }, 2200);
+    t._timer = setTimeout(() => { t.className = 'toast'; }, 2600);
   }
 
-  function tambahData() {
-    const Z = parseFloat(document.getElementById("tinggiZ").value);
-    const lebarXraw = parseFloat(document.getElementById("lebarX").value);
-    const panjangYraw = parseFloat(document.getElementById("panjangY").value);
-    const tX = parseFloat(document.getElementById("targetX").value);
-    const tY = parseFloat(document.getElementById("targetY").value);
+  // ---------- UI wiring ----------
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault(); dropzone.classList.remove('drag');
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
 
-    if ([Z, lebarXraw, panjangYraw, tX, tY].some(v => isNaN(v))) {
-      showToast("Isi semua kolom dengan angka yang valid", true);
-      return;
+  document.getElementById('threshold').addEventListener('input', e => {
+    document.getElementById('threshVal').textContent = e.target.value;
+  });
+  document.getElementById('pointSpacing').addEventListener('input', e => {
+    document.getElementById('spacingVal').textContent = parseFloat(e.target.value).toFixed(1);
+  });
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024*1024) return `${(bytes/1024).toFixed(1)} KB`;
+    return `${(bytes/(1024*1024)).toFixed(2)} MB`;
+  }
+
+  function loadFile(file) {
+    if (!file.type.startsWith('image/')) { showToast('File harus berupa gambar', true); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        loadedImage = img;
+        document.getElementById('btnProses').disabled = false;
+
+        document.getElementById('thumbImg').src = e.target.result;
+        document.getElementById('fname').textContent = file.name;
+        const persegi = img.naturalWidth === img.naturalHeight ? '' : ' · ⚠ bukan persegi';
+        document.getElementById('fmeta').textContent =
+          `${img.naturalWidth}×${img.naturalHeight}px · ${formatBytes(file.size)}${persegi}`;
+
+        document.getElementById('dropzone').style.display = 'none';
+        document.getElementById('fileCard').classList.add('show');
+
+        showToast('Gambar dimuat — atur parameter lalu tekan Deteksi');
+      };
+      img.onerror = () => showToast('Gagal membaca gambar', true);
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- Image -> binary grid ----------
+  function buildBinary() {
+    const iw = loadedImage.naturalWidth, ih = loadedImage.naturalHeight;
+    let w = iw, h = ih;
+    if (Math.max(w, h) > MAX_DIM) {
+      const scale = MAX_DIM / Math.max(w, h);
+      w = Math.round(w * scale); h = Math.round(h * scale);
     }
-    if (tX === 0 && tY === 0) {
-      showToast("Target tepat di pusat — tidak ada sisi yang dituju", true);
-      return;
+    workCanvas.width = w; workCanvas.height = h;
+    workCtx.drawImage(loadedImage, 0, 0, w, h);
+    const imgData = workCtx.getImageData(0, 0, w, h);
+    const px = imgData.data;
+    const threshold = parseInt(document.getElementById('threshold').value, 10);
+    const invert = document.getElementById('invertColor').checked;
+
+    const bin = new Uint8Array(w * h);
+    for (let i = 0, p = 0; i < px.length; i += 4, p++) {
+      const lum = 0.299*px[i] + 0.587*px[i+1] + 0.114*px[i+2];
+      let isDark = lum < threshold;
+      if (invert) isDark = !isDark;
+      bin[p] = isDark ? 1 : 0;
+    }
+    return { bin, w, h };
+  }
+
+  // ---------- Connected components (flood fill, 8-connectivity) ----------
+  function findBlobs(bin, w, h, minArea) {
+    const labels = new Int32Array(w * h);
+    const blobs = [];
+    const stack = new Int32Array(w * h);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x;
+        if (bin[idx] !== 1 || labels[idx] !== 0) continue;
+
+        let sp = 0;
+        stack[sp++] = idx;
+        labels[idx] = 1;
+        const pts = [];
+        let minX=x, minY=y;
+
+        while (sp > 0) {
+          const cur = stack[--sp];
+          const cx = cur % w, cy = (cur / w) | 0;
+          pts.push(cur);
+          if (cx < minX) minX = cx;
+          if (cy < minY) minY = cy;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nx = cx + dx, ny = cy + dy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+              const nidx = ny * w + nx;
+              if (bin[nidx] === 1 && labels[nidx] === 0) {
+                labels[nidx] = 1;
+                stack[sp++] = nidx;
+              }
+            }
+          }
+        }
+        if (pts.length >= minArea) {
+          // cari titik start = topmost, lalu leftmost pada baris teratas itu
+          let startIdx = pts[0];
+          let startY = (startIdx / w) | 0;
+          for (const p of pts) {
+            const py = (p / w) | 0;
+            if (py < startY || (py === startY && (p % w) < (startIdx % w))) {
+              startIdx = p; startY = py;
+            }
+          }
+          blobs.push({ startX: startIdx % w, startY: (startIdx / w) | 0, size: pts.length });
+        }
+      }
+    }
+    return blobs;
+  }
+
+  // ---------- Moore-Neighbor boundary tracing (generik) ----------
+  const DIRS = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+
+  function traceContourGeneric(isMember, w, h, startX, startY) {
+    const contour = [];
+    let cx = startX, cy = startY, dir = 6; // mulai cari dari Utara
+    const first = { x: cx, y: cy };
+    let guard = 0;
+    const maxGuard = w * h * 4;
+
+    let hasNeighbor = false;
+    for (let i = 0; i < 8; i++) { if (isMember(cx+DIRS[i][0], cy+DIRS[i][1])) { hasNeighbor = true; break; } }
+    if (!hasNeighbor) return [{ x: cx, y: cy }];
+
+    do {
+      let found = false;
+      for (let i = 0; i < 8; i++) {
+        const ndir = (dir + i) % 8;
+        const nx = cx + DIRS[ndir][0], ny = cy + DIRS[ndir][1];
+        if (isMember(nx, ny)) {
+          contour.push({ x: cx, y: cy });
+          cx = nx; cy = ny;
+          dir = (ndir + 6) % 8;
+          found = true;
+          break;
+        }
+      }
+      if (!found) break;
+      guard++;
+      if (guard > maxGuard) break;
+    } while (!(cx === first.x && cy === first.y));
+    contour.push(first);
+    return contour;
+  }
+
+  // ---------- Deteksi lubang (background yang terkurung di dalam area hitam) ----------
+  function findHoles(bin, w, h, minArea) {
+    // 1. Tandai background yang terhubung ke tepi gambar (bukan lubang)
+    const outerBg = new Uint8Array(w * h);
+    const stack = new Int32Array(w * h * 2);
+    let sp = 0;
+    for (let x = 0; x < w; x++) {
+      [0, h-1].forEach(y => {
+        const idx = y*w+x;
+        if (bin[idx] === 0 && !outerBg[idx]) { outerBg[idx] = 1; stack[sp++] = idx; }
+      });
+    }
+    for (let y = 0; y < h; y++) {
+      [0, w-1].forEach(x => {
+        const idx = y*w+x;
+        if (bin[idx] === 0 && !outerBg[idx]) { outerBg[idx] = 1; stack[sp++] = idx; }
+      });
+    }
+    while (sp > 0) {
+      const cur = stack[--sp];
+      const cx = cur % w, cy = (cur / w) | 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = cx+dx, ny = cy+dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const nidx = ny*w+nx;
+          if (bin[nidx] === 0 && !outerBg[nidx]) { outerBg[nidx] = 1; stack[sp++] = nidx; }
+        }
+      }
     }
 
-    const dX = lebarXraw / 2;
-    const dY = panjangYraw / 2;
-    const absX = Math.abs(tX); const absY = Math.abs(tY);
+    // 2. Sisa background yang tidak "outerBg" = lubang. Beri label per komponen.
+    const holeLabel = new Int32Array(w * h);
+    let nextId = 1;
+    const holes = [];
+    const stack2 = new Int32Array(w * h);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y*w+x;
+        if (bin[idx] !== 0 || outerBg[idx] || holeLabel[idx] !== 0) continue;
+
+        let sp2 = 0;
+        stack2[sp2++] = idx;
+        holeLabel[idx] = nextId;
+        const pts = [];
+        while (sp2 > 0) {
+          const cur = stack2[--sp2];
+          const cx = cur % w, cy = (cur / w) | 0;
+          pts.push(cur);
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nx = cx+dx, ny = cy+dy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+              const nidx = ny*w+nx;
+              if (bin[nidx] === 0 && !outerBg[nidx] && holeLabel[nidx] === 0) {
+                holeLabel[nidx] = nextId;
+                stack2[sp2++] = nidx;
+              }
+            }
+          }
+        }
+        if (pts.length >= minArea) {
+          let startIdx = pts[0], startY = (startIdx / w) | 0;
+          for (const p of pts) {
+            const py = (p / w) | 0;
+            if (py < startY || (py === startY && (p % w) < (startIdx % w))) { startIdx = p; startY = py; }
+          }
+          holes.push({ id: nextId, startX: startIdx % w, startY: (startIdx / w) | 0, size: pts.length });
+        }
+        nextId++;
+      }
+    }
+    return { holes, holeLabel };
+  }
+  function decimate(contour, minSpacingPx) {
+    if (contour.length === 0) return [];
+    const kept = [contour[0]];
+    let last = contour[0];
+    for (let i = 1; i < contour.length; i++) {
+      const p = contour[i];
+      const d = Math.hypot(p.x - last.x, p.y - last.y);
+      if (d >= minSpacingPx) { kept.push(p); last = p; }
+    }
+    return kept;
+  }
+
+  // ---------- Proyeksi (identik dengan Kalkulator) ----------
+  function proyeksikan(Z, lebarXraw, panjangYraw, tX, tY) {
+    if (tX === 0 && tY === 0) return null;
+    const dX = lebarXraw / 2, dY = panjangYraw / 2;
+    const absX = Math.abs(tX), absY = Math.abs(tY);
 
     let sisi, zFrame, lebarFrame;
     if (absX === 0) {
@@ -487,74 +688,169 @@
       zFrame = Z - (dY / absY) * Z;
       lebarFrame = (dY / absY) * tX;
     }
-
     if (sisi === "Bawah" || sisi === "Kanan") { lebarFrame *= -1; }
-
-    if (isNaN(zFrame) || zFrame < 0) { showToast("Peringatan: Proyeksi melesat!", true); return; }
-
-    data[sisi].push({ z: zFrame.toFixed(2), g: lebarFrame.toFixed(2) });
-    updateTabel();
-    showToast(`Titik ditambahkan ke sisi ${sisi}`);
+    if (isNaN(zFrame) || zFrame < 0) return null;
+    return { sisi, z: zFrame, g: lebarFrame };
   }
 
-  function updateTabel() {
-    sisiList.forEach(s => {
-      const body = document.getElementById(`body-${s}`);
-      const empty = document.getElementById(`empty-${s}`);
-      const count = document.getElementById(`count-${s}`);
-      count.textContent = `${data[s].length} titik`;
-      body.style.display = data[s].length ? '' : 'none';
-      empty.style.display = data[s].length ? 'none' : '';
-      body.innerHTML = data[s].map((item, i) => `
-        <tr>
-          <td>${item.z}</td>
-          <td>${item.g}</td>
-          <td><button class="row-del" onclick="hapus('${s}', ${i})">×</button></td>
-        </tr>
-      `).join('');
+  // ---------- Pipeline utama ----------
+  let lastResult = null;
+
+  function prosesGambar() {
+    if (!loadedImage) return;
+    const Z = parseFloat(document.getElementById('dimZ').value);
+    const X = parseFloat(document.getElementById('dimX').value);
+    const Y = parseFloat(document.getElementById('dimY').value);
+    if ([Z,X,Y].some(v => isNaN(v)) || Z<=0 || X<=0 || Y<=0) {
+      showToast('Periksa kembali dimensi Z, X, Y', true); return;
+    }
+
+    const { bin, w, h } = buildBinary();
+    if (w !== h) {
+      showToast('Gambar tidak persegi — hasil bisa terdistorsi', true);
+    }
+
+    const minArea = Math.max(8, Math.round(w * h * 0.0005));
+    const blobs = findBlobs(bin, w, h, minArea);
+    if (!blobs.length) {
+      showToast('Tidak ditemukan area hitam yang cukup besar', true);
+      return;
+    }
+
+    // lubang: background yang terkurung (dipakai untuk huruf/karakter berlubang)
+    const minHoleArea = Math.max(4, Math.round(w * h * 0.00008));
+    const { holes, holeLabel } = findHoles(bin, w, h, minHoleArea);
+
+    // grid -40..40 dipetakan dari lebar gambar kerja
+    const scale = 80 / w;
+    const cx0 = w / 2, cy0 = h / 2;
+    const spacingCm = parseFloat(document.getElementById('pointSpacing').value);
+    const spacingPx = spacingCm / scale;
+    const flipX = document.getElementById('flipX').checked;
+    const flipY = document.getElementById('flipY').checked;
+
+    let outerPts = [], innerPts = [];
+    let rejects = 0;
+    const grouped = { Atas: [], Bawah: [], Kanan: [], Kiri: [] };
+
+    function isFgMember(x, y) { return x >= 0 && y >= 0 && x < w && y < h && bin[y*w+x] === 1; }
+
+    function prosesTitik(pt) {
+      let tX = (pt.x - cx0) * scale;
+      let tY = (cy0 - pt.y) * scale; // sumbu Y gambar terbalik vs sumbu kartesian
+      if (flipX) tX *= -1;
+      if (flipY) tY *= -1;
+      tX = Math.max(-40, Math.min(40, tX));
+      tY = Math.max(-40, Math.min(40, tY));
+
+      const r = proyeksikan(Z, X, Y, tX, tY);
+      if (!r) { rejects++; return; }
+      grouped[r.sisi].push({ z: r.z.toFixed(2), g: r.g.toFixed(2) });
+    }
+
+    // kontur luar (garis potong terluar tiap area hitam)
+    blobs.forEach(b => {
+      const contour = traceContourGeneric(isFgMember, w, h, b.startX, b.startY);
+      const thin = decimate(contour, spacingPx);
+      outerPts.push(...thin);
+      thin.forEach(prosesTitik);
     });
-  }
 
-  function hapus(s, i) { data[s].splice(i, 1); updateTabel(); }
-
-  function dimensiHeader() {
-    const Z = document.getElementById("tinggiZ").value;
-    const X = document.getElementById("lebarX").value;
-    const Y = document.getElementById("panjangY").value;
-    return `# DIMENSI Z=${Z} X=${X} Y=${Y}`;
-  }
-
-  function blokSisi(s) {
-    if (!data[s].length) return '';
-    return `${s.toUpperCase()}\n` + data[s].map(d => `${d.z},${d.g}`).join('\n');
-  }
-
-  function salinSisi(s) {
-    if (!data[s].length) { showToast("Tidak ada data untuk disalin", true); return; }
-    const text = `${dimensiHeader()}\n${blokSisi(s)}`;
-    navigator.clipboard.writeText(text).then(() => {
-      showToast(`${data[s].length} titik sisi ${s} disalin`);
-      const btn = document.getElementById(`copy-${s}`);
-      btn.textContent = 'Tersalin'; btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'Salin'; btn.classList.remove('copied'); }, 1500);
+    // kontur dalam (lubang — misal bagian dalam huruf O, mata karakter)
+    holes.forEach(hl => {
+      const isHoleMember = (x, y) => x >= 0 && y >= 0 && x < w && y < h && holeLabel[y*w+x] === hl.id;
+      const contour = traceContourGeneric(isHoleMember, w, h, hl.startX, hl.startY);
+      const thin = decimate(contour, spacingPx);
+      innerPts.push(...thin);
+      thin.forEach(prosesTitik);
     });
+
+    lastResult = { grouped, Z, X, Y };
+    gambarPratinjau(bin, w, h, outerPts, innerPts);
+    tampilkanOutput(grouped, Z, X, Y);
+
+    const total = Object.values(grouped).reduce((n,a)=>n+a.length,0);
+    document.getElementById('metaInfo').innerHTML =
+      `<b>${blobs.length}</b> area luar · <b>${holes.length}</b> lubang terdeteksi · <b>${total}</b> titik dihasilkan` +
+      (rejects ? `<br/><span class="warn">⚠ ${rejects} titik dilewati (proyeksi melesat)</span>` : `<br/><span class="ok">✓ semua titik valid</span>`);
+    showToast(`Deteksi selesai — ${total} titik dikonversi`);
   }
 
-  function salinSemua() {
-    const blocks = sisiList.map(blokSisi).filter(Boolean);
-    if (!blocks.length) { showToast("Belum ada titik di sisi manapun", true); return; }
-    const text = `${dimensiHeader()}\n\n${blocks.join('\n\n')}`;
+  function gambarPratinjau(bin, w, h, outerPts, innerPts) {
+    const card = document.getElementById('previewCard');
+    card.style.display = '';
+    document.getElementById('emptyPreview').style.display = 'none';
+    document.getElementById('previewMeta').textContent = `${w}×${h}px · ${outerPts.length} luar / ${innerPts.length} dalam`;
+
+    const canvas = document.getElementById('viewCanvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    // gambar biner sebagai dasar (putih=background, gelap=foreground)
+    const imgData = ctx.createImageData(w, h);
+    for (let i = 0; i < bin.length; i++) {
+      const v = bin[i] === 1 ? 30 : 235;
+      imgData.data[i*4] = v; imgData.data[i*4+1] = v; imgData.data[i*4+2] = v; imgData.data[i*4+3] = 255;
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    // overlay titik kontur luar (amber)
+    ctx.fillStyle = '#ffb454';
+    outerPts.forEach(p => { ctx.fillRect(p.x-1, p.y-1, 2, 2); });
+
+    // overlay titik kontur lubang (cyan)
+    ctx.fillStyle = '#5ec8ff';
+    innerPts.forEach(p => { ctx.fillRect(p.x-1, p.y-1, 2, 2); });
+
+    // sumbu (0,0)
+    ctx.strokeStyle = 'rgba(255,180,84,0.4)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
+  }
+
+  function tampilkanOutput(grouped, Z, X, Y) {
+    const card = document.getElementById('outputCard');
+    card.style.display = '';
+
+    const tally = document.getElementById('sideTally');
+    tally.innerHTML = ['Atas','Bawah','Kanan','Kiri'].map(s => `
+      <div class="tally-item">
+        <div><span class="sw" style="background:${sisiColor[s]}"></span><span class="n">${s.toUpperCase()}</span></div>
+        <div class="v">${grouped[s].length}</div>
+      </div>
+    `).join('');
+
+    const blocks = ['Atas','Bawah','Kanan','Kiri']
+      .filter(s => grouped[s].length)
+      .map(s => `${s.toUpperCase()}\n` + grouped[s].map(d => `${d.z},${d.g}`).join('\n'));
+
+    const text = `# DIMENSI Z=${Z} X=${X} Y=${Y}\n\n${blocks.join('\n\n')}`;
+    document.getElementById('outputText').value = text;
+  }
+
+  function salinOutput() {
+    const text = document.getElementById('outputText').value;
+    if (!text) { showToast('Belum ada hasil untuk disalin', true); return; }
     navigator.clipboard.writeText(text).then(() => {
-      const total = sisiList.reduce((n, s) => n + data[s].length, 0);
-      showToast(`${total} titik dari semua sisi disalin`);
-      const btn = document.getElementById('btn-copy-all');
-      const original = '⧉ Salin Semua Koordinat';
+      showToast('Kordinat disalin ke clipboard');
+      const btn = document.getElementById('btnCopy');
+      const original = btn.textContent;
       btn.textContent = '✓ Tersalin'; btn.classList.add('copied');
       setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
-    });
+    }).catch(() => showToast('Gagal menyalin — coba pilih teks manual', true));
   }
 
-  updateTabel();
+  function unduhOutput() {
+    const text = document.getElementById('outputText').value;
+    if (!text) { showToast('Belum ada hasil untuk diunduh', true); return; }
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'shadow-art-kordinat.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('File .txt diunduh');
+  }
 </script>
 </body>
 </html>

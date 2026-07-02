@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shadow Art Proyektor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:           #0b0d10;
+    --panel:        #14171c;
+    --panel-raised: #1a1e24;
+    --line:         #262b33;
+    --line-bright:  #383f4a;
+    --ink:          #e6e9ed;
+    --ink-dim:      #8b929e;
+    --ink-faint:    #565d68;
+    --amber:        #ffb454;
+    --amber-dim:    #8a6a3a;
+    --atas:        #5ec8ff;
+    --bawah:     #ff7a7a;
+    --kanan:        #7ee787;
+    --kiri:         #c792ea;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0;
+    background:
+      radial-gradient(ellipse 1200px 600px at 50% -10%, #1a1d23 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--amber-dim); color:#fff; }
+
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .wrap{
+    max-width:1280px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  .head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+    margin-bottom:28px;
+  }
+  .head-left .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 8px var(--amber);
+  }
+  .head-left h1{
+    margin:0;
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:-.01em;
+  }
+  .head-left .sub{
+    color:var(--ink-dim);
+    font-size:13.5px;
+    margin-top:6px;
+    max-width:520px;
+    line-height:1.5;
+  }
+  .head-right{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-faint);
+    text-align:right;
+    line-height:1.7;
+  }
+  .head-right b{ color:var(--ink-dim); font-weight:500; }
+
+  /* ---------- Input console ---------- */
+  .console{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px 22px 18px;
+    margin-bottom:30px;
+    position:relative;
+    overflow:hidden;
+  }
+  .console::before{
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--amber-dim), transparent);
+  }
+  .console-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.14em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    margin-bottom:16px;
+  }
+
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:14px 16px;
+    margin-bottom:8px;
+  }
+  .field-group{
+    grid-column: span 3;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:14px;
+  }
+  .field-group-z{
+    grid-template-columns: minmax(140px, 220px);
+  }
+  .field-divider{
+    grid-column: span 3;
+    height:1px;
+    background:var(--line);
+    margin:2px 0 4px;
+  }
+
+  .field{ position:relative; }
+  .field label{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.06em;
+    color:var(--ink-faint);
+    margin-bottom:7px;
+    text-transform:uppercase;
+  }
+  .field label .unit{ color:var(--amber-dim); }
+  .field input{
+    width:100%;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-size:15px;
+    font-weight:500;
+    padding:11px 12px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .field input:hover{ border-color:var(--line-bright); }
+  .field input:focus{
+    outline:none;
+    border-color:var(--amber);
+    background:#191c20;
+  }
+  .field.target input{ color:var(--amber); }
+
+  .btn-row{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:10px;
+    margin-top:14px;
+  }
+  .btn-copy-all{
+    background:transparent;
+    color:var(--ink-dim);
+    border:1px solid var(--line-bright);
+    border-radius:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:11.5px;
+    letter-spacing:.03em;
+    padding:10px 16px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .btn-copy-all:hover{ border-color:var(--amber-dim); color:var(--amber); }
+  .btn-copy-all.copied{ border-color:#7ee787; color:#7ee787; }
+  .btn-add{
+    background:var(--amber);
+    color:#1a1306;
+    border:none;
+    border-radius:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size:12.5px;
+    letter-spacing:.04em;
+    padding:11px 22px;
+    cursor:pointer;
+    transition:filter .15s ease, transform .1s ease;
+    text-transform:uppercase;
+    text-decoration: none;
+  }
+  .btn-add:hover{ filter:brightness(1.08); }
+  .btn-add:active{ transform:scale(.98); }
+
+  /* ---------- Side panels ---------- */
+  .sides{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+  }
+  @media (max-width: 980px){
+    .sides{ grid-template-columns:repeat(2, 1fr); }
+  }
+  @media (max-width: 560px){
+    .sides{ grid-template-columns:1fr; }
+    .field-group, .field-grid{ grid-template-columns:repeat(2,1fr); }
+    .field-group .field:last-child{ grid-column: span 2; }
+    .btn-row{ flex-direction:column; align-items:stretch; }
+  }
+
+  .side-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .side-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:13px 14px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel-raised);
+  }
+  .side-name{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:.1em;
+    font-weight:600;
+  }
+  .side-name .swatch{
+    width:8px; height:8px; border-radius:2px;
+  }
+  .side-count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    color:var(--ink-faint);
+  }
+  .btn-copy{
+    background:transparent;
+    border:1px solid var(--line-bright);
+    color:var(--ink-dim);
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:.06em;
+    border-radius:5px;
+    padding:5px 9px;
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:all .15s ease;
+  }
+  .btn-copy:hover{ border-color:var(--ink-dim); color:var(--ink); }
+  .btn-copy.copied{ border-color:#7ee787; color:#7ee787; }
+
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    font-weight:500;
+    padding:9px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  thead th:last-child{ width:30px; }
+  tbody td{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    padding:9px 12px;
+    border-bottom:1px solid var(--line);
+    color:var(--ink);
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover td{ background:rgba(255,255,255,0.02); }
+  tbody td:nth-child(2){ color:var(--ink-dim); }
+
+  .row-del{
+    background:transparent;
+    border:none;
+    color:var(--ink-faint);
+    cursor:pointer;
+    font-size:15px;
+    line-height:1;
+    padding:2px 5px;
+    border-radius:4px;
+    transition:all .15s ease;
+  }
+  .row-del:hover{ color:#ff7a7a; background:rgba(255,122,122,0.1); }
+
+  .empty-state{
+    padding:28px 14px;
+    text-align:center;
+    color:var(--ink-faint);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:.02em;
+  }
+
+  /* per-side accent bars */
+  .side-card[data-side="Atas"] .side-head{ border-bottom-color:#1f3848; }
+  .side-card[data-side="Bawah"] .side-head{ border-bottom-color:#3f2424; }
+  .side-card[data-side="Kanan"] .side-head{ border-bottom-color:#23391f; }
+  .side-card[data-side="Kiri"] .side-head{ border-bottom-color:#332540; }
+
+  /* toast */
+  .toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--panel-raised);
+    border:1px solid var(--line-bright);
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    padding:11px 18px;
+    border-radius:8px;
+    opacity:0;
+    pointer-events:none;
+    transition:all .25s ease;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    z-index:50;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .toast.warn{ border-color:#8a3a3a; color:#ff9a9a; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="head">
+      <div class="head-left">
+        <div class="eyebrow"><span class="dot"></span>Kalkulator Geometri Proyeksi</div>
+        <h1>Shadow Art Proyektor</h1>
+        <div class="sub">Hitung posisi lubang pada empat sisi kotak untuk membentuk bayangan target saat disinari dari titik tengah atas.</div>
+      </div>
+      <div class="head-right">
+        DIMENSI KOTAK <b>X × Y × Z</b>
+      </div>
+      <a class="btn-add" href="polacetak.html" target="_blank">Cetak Pola</a>
+    </div>
+
+    <!-- Input console -->
+    <div class="console">
+      <div class="console-label">Parameter Input</div>
+      <div class="field-grid">
+        <div class="field-group field-group-z">
+          <div class="field">
+            <label>Tinggi <span class="unit">Z · cm</span></label>
+            <input type="number" id="tinggiZ" value="10" step="0.1" />
+          </div>
+        </div>
+        <div class="field-divider"></div>
+        <div class="field-group">
+          <div class="field">
+            <label>Lebar <span class="unit">X · cm</span></label>
+            <input type="number" id="lebarX" value="12" step="0.1" />
+          </div>
+          <div class="field">
+            <label>Panjang <span class="unit">Y · cm</span></label>
+            <input type="number" id="panjangY" value="16" step="0.1" />
+          </div>
+          <div class="field" aria-hidden="true"></div>
+        </div>
+        <div class="field-divider"></div>
+        <div class="field-group">
+          <div class="field target">
+            <label>Target <span class="unit">X · cm</span></label>
+            <input type="number" id="targetX" value="15" step="0.1" />
+          </div>
+          <div class="field target">
+            <label>Target <span class="unit">Y · cm</span></label>
+            <input type="number" id="targetY" value="8" step="0.1" />
+          </div>
+          <div class="field" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-copy-all" id="btn-copy-all" onclick="salinSemua()">⧉ Salin Semua Koordinat</button>
+        <button class="btn-add" onclick="tambahData()">+ Tambah Titik</button>
+      </div>
+    </div>
+
+    <!-- Side panels -->
+    <div class="sides" id="sides-container"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const sisiList = ['Atas', 'Bawah', 'Kanan', 'Kiri'];
+  const sisiColor = { Atas: 'var(--atas)', Bawah: 'var(--bawah)', Kanan: 'var(--kanan)', Kiri: 'var(--kiri)' };
+  let data = { Atas: [], Bawah: [], Kanan: [], Kiri: [] };
+
+  const container = document.getElementById('sides-container');
+  container.innerHTML = sisiList.map(s => `
+    <div class="side-card" data-side="${s}">
+      <div class="side-head">
+        <div class="side-name">
+          <span class="swatch" style="background:${sisiColor[s]}"></span>
+          ${s.toUpperCase()}
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="side-count" id="count-${s}">0 titik</span>
+          <button class="btn-copy" id="copy-${s}" onclick="salinSisi('${s}')">Salin</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Z (cm)</th><th>Geser (cm)</th><th></th></tr></thead>
+        <tbody id="body-${s}"></tbody>
+      </table>
+      <div class="empty-state" id="empty-${s}">Belum ada titik</div>
+    </div>
+  `).join('');
+
+  function showToast(msg, warn=false){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (warn ? ' warn' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = 'toast'; }, 2200);
+  }
+
+  function tambahData() {
+    const Z = parseFloat(document.getElementById("tinggiZ").value);
+    const lebarXraw = parseFloat(document.getElementById("lebarX").value);
+    const panjangYraw = parseFloat(document.getElementById("panjangY").value);
+    const tX = parseFloat(document.getElementById("targetX").value);
+    const tY = parseFloat(document.getElementById("targetY").value);
+
+    if ([Z, lebarXraw, panjangYraw, tX, tY].some(v => isNaN(v))) {
+      showToast("Isi semua kolom dengan angka yang valid", true);
+      return;
+    }
+    if (tX === 0 && tY === 0) {
+      showToast("Target tepat di pusat — tidak ada sisi yang dituju", true);
+      return;
+    }
+
+    const dX = lebarXraw / 2;
+    const dY = panjangYraw / 2;
+    const absX = Math.abs(tX); const absY = Math.abs(tY);
+
+    let sisi, zFrame, lebarFrame;
+    if (absX === 0) {
+      sisi = tY >= 0 ? "Atas" : "Bawah";
+      zFrame = Z - (dY / absY) * Z;
+      lebarFrame = 0;
+    } else if (absY === 0) {
+      sisi = tX >= 0 ? "Kanan" : "Kiri";
+      zFrame = Z - (dX / absX) * Z;
+      lebarFrame = 0;
+    } else if ((absX * dY) >= (absY * dX)) {
+      sisi = tX >= 0 ? "Kanan" : "Kiri";
+      zFrame = Z - (dX / absX) * Z;
+      lebarFrame = (dX / absX) * tY;
+    } else {
+      sisi = tY >= 0 ? "Atas" : "Bawah";
+      zFrame = Z - (dY / absY) * Z;
+      lebarFrame = (dY / absY) * tX;
+    }
+
+    if (sisi === "Bawah" || sisi === "Kanan") { lebarFrame *= -1; }
+
+    if (isNaN(zFrame) || zFrame < 0) { showToast("Peringatan: Proyeksi melesat!", true); return; }
+
+    data[sisi].push({ z: zFrame.toFixed(2), g: lebarFrame.toFixed(2) });
+    updateTabel();
+    showToast(`Titik ditambahkan ke sisi ${sisi}`);
+  }
+
+  function updateTabel() {
+    sisiList.forEach(s => {
+      const body = document.getElementById(`body-${s}`);
+      const empty = document.getElementById(`empty-${s}`);
+      const count = document.getElementById(`count-${s}`);
+      count.textContent = `${data[s].length} titik`;
+      body.style.display = data[s].length ? '' : 'none';
+      empty.style.display = data[s].length ? 'none' : '';
+      body.innerHTML = data[s].map((item, i) => `
+        <tr>
+          <td>${item.z}</td>
+          <td>${item.g}</td>
+          <td><button class="row-del" onclick="hapus('${s}', ${i})">×</button></td>
+        </tr>
+      `).join('');
+    });
+  }
+
+  function hapus(s, i) { data[s].splice(i, 1); updateTabel(); }
+
+  function dimensiHeader() {
+    const Z = document.getElementById("tinggiZ").value;
+    const X = document.getElementById("lebarX").value;
+    const Y = document.getElementById("panjangY").value;
+    return `# DIMENSI Z=${Z} X=${X} Y=${Y}`;
+  }
+
+  function blokSisi(s) {
+    if (!data[s].length) return '';
+    return `${s.toUpperCase()}\n` + data[s].map(d => `${d.z},${d.g}`).join('\n');
+  }
+
+  function salinSisi(s) {
+    if (!data[s].length) { showToast("Tidak ada data untuk disalin", true); return; }
+    const text = `${dimensiHeader()}\n${blokSisi(s)}`;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(`${data[s].length} titik sisi ${s} disalin`);
+      const btn = document.getElementById(`copy-${s}`);
+      btn.textContent = 'Tersalin'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Salin'; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  function salinSemua() {
+    const blocks = sisiList.map(blokSisi).filter(Boolean);
+    if (!blocks.length) { showToast("Belum ada titik di sisi manapun", true); return; }
+    const text = `${dimensiHeader()}\n\n${blocks.join('\n\n')}`;
+    navigator.clipboard.writeText(text).then(() => {
+      const total = sisiList.reduce((n, s) => n + data[s].length, 0);
+      showToast(`${total} titik dari semua sisi disalin`);
+      const btn = document.getElementById('btn-copy-all');
+      const original = '⧉ Salin Semua Koordinat';
+      btn.textContent = '✓ Tersalin'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  updateTabel();
+</script>
+</body>
+</html>
